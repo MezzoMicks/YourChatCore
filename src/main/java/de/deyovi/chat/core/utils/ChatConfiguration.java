@@ -1,16 +1,9 @@
 package de.deyovi.chat.core.utils;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
@@ -235,22 +228,5 @@ public class ChatConfiguration {
 		return output;
 	}
 
-	private String getOSNameSimple(String osname) {
-		osname = osname.toLowerCase();
-		String result;
-		if (osname.indexOf("win") >= 0) {
-			result = "win";
-		} else if (osname.indexOf("mac") >= 0) {
-			result = "mac";
-		} else if (osname.indexOf("nix") >= 0 || osname.indexOf("nux") >= 0
-				|| osname.indexOf("aix") > 0) {
-			result = "linux";
-		} else if (osname.indexOf("sunos") >= 0) {
-			result = "sunos";
-		} else {
-			result = "misc";
-		}
-		return result;
-	}
 
 }

@@ -109,7 +109,7 @@ public class DefaultInputProcessorService implements InputProcessorService {
 		// Hidden
 	}
 
-	private CommandProcessorService commandProcessorService = new DefaultCommandProcessorService();
+	private CommandProcessorService commandProcessorService = DefaultCommandProcessorService.getInstance();
 	private FileStoreService fileStoreService = DefaultFileStoreService.getInstance();
 	
 	@Override
@@ -214,8 +214,6 @@ public class DefaultInputProcessorService implements InputProcessorService {
 				String contentType = mimeTypesMap.getContentType(uploadname);
 				logger.info("Upload from " + username + " stored to " + filename + "[" + contentType +"]" );
 				ContentType type;
-				String preview = null;
-				String pinky = null;
 				ThumbGeneratorService thumbGeneratorService;
 				if (contentType.startsWith("video")) {
 					type = ContentType.VIDEO;
