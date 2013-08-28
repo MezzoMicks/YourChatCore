@@ -297,7 +297,7 @@ public class DefaultRoom implements Room {
 		} else {
 			Segment[] segments = inputProcessorService.process(user, motd, uploadStream, uploadName);
 			segments = Arrays.copyOf(segments, segments.length + 1);
-			segments[segments.length - 1] =  new TextSegment(user.getUserName(), "\n");
+			segments[segments.length - 1] =  new TextSegment(user != null ? user.getUserName() : "$system", "\n");
 			SystemMessage motdMessage = new SystemMessage(null, 0, MessagePreset.MOTD);
 			motdMessage.append(segments);
 			this.motd = motdMessage;

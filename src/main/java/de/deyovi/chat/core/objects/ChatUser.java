@@ -52,4 +52,6 @@ public interface ChatUser {
 
 	public void setProfile(Profile profile);
 
+	public Message read();
+
 }

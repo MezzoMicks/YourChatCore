@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.MissingResourceException;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
@@ -78,7 +79,7 @@ public class ChatConfiguration {
 		return instance.ffmpegthumbnailer;
 	}
 
-	public static String[] getChannels() {
+	public static String[] getRooms() {
 		return instance.channels;
 	}
 
@@ -113,13 +114,16 @@ public class ChatConfiguration {
 
 		return (temp);
 	}
+	
+	public static void initialize() {
+		instance = new ChatConfiguration();
+	}
 
 	private void readConfig() {
 		ResourceBundle bundle = PropertyResourceBundle
 				.getBundle(ChatConstants.PROPERTY_BUNDLE);
 		// Channels
-		String channelsParam = bundle
-				.getString(ChatConstants.PROPERTY_CHANNELS);
+		String channelsParam = readResource(bundle, ChatConstants.PROPERTY_CHANNELS);
 		if (channelsParam != null && !channelsParam.trim().isEmpty()) {
 			channels = channelsParam.split(";");
 		} else {
@@ -127,7 +131,7 @@ public class ChatConfiguration {
 			channels = new String[] { "Main" };
 		}
 		// PhantomJS
-		phantomjs = bundle.getString(ChatConstants.PROPERTY_PHANTOMJS);
+		phantomjs = readResource(bundle, ChatConstants.PROPERTY_PHANTOMJS);
 		if (phantomjs != null) {
 			if (new File(phantomjs).isFile()) {
 				logger.info("path to phantomjs is: " + phantomjs + " (present)");
@@ -138,7 +142,7 @@ public class ChatConfiguration {
 			}
 		}
 		// RenderJS-File
-		renderjs = bundle.getString(ChatConstants.PROPERTY_RENDERJS);
+		renderjs = readResource(bundle, ChatConstants.PROPERTY_RENDERJS);
 		if (renderjs != null) {
 			if (new File(renderjs).isFile()) {
 				logger.info("path to renderjs is: " + renderjs + " (present)");
@@ -149,8 +153,7 @@ public class ChatConfiguration {
 			}
 		}
 		// FFMPEGThumbnailer
-		ffmpegthumbnailer = bundle
-				.getString(ChatConstants.PROPERTY_FFMPEGTHUMBNAILER);
+		ffmpegthumbnailer = readResource(bundle, ChatConstants.PROPERTY_FFMPEGTHUMBNAILER);
 		if (ffmpegthumbnailer != null) {
 			if (new File(ffmpegthumbnailer).isFile()) {
 				logger.info("path to ffmpegthumbnailer is: "
@@ -162,31 +165,40 @@ public class ChatConfiguration {
 			}
 		}
 		// Data/Upload-Path
-		dataDir = bundle.getString(ChatConstants.PROPERTY_DATAPATH);
+		dataDir = readResource(bundle, ChatConstants.PROPERTY_DATAPATH);
 		if (dataDir != null && dataDir.trim().isEmpty()) {
 			dataDir = null;
 		}
-		if (dataDir == null) {
+		if (dataDir != null) {
 			String state = checkAndCreateFile(dataDir);
 			logger.info("path for uploads is: " + dataDir + state);
 		} else {
-			logger.info("no path for uploads supplied, relying on current default ("
-					+ defaultDataDir + ")");
+			logger.info("no path for uploads supplied, relying on current default (" + defaultDataDir + ")");
+			dataDir = defaultDataDir;
 		}
 		// Upload-Parameters
-		uploadThreshold = strToInt(bundle.getString(ChatConstants.PROPERTY_UPLOAD_THRESHOLD));
+		uploadThreshold = strToInt(readResource(bundle, ChatConstants.PROPERTY_UPLOAD_THRESHOLD));
 		if (uploadThreshold == null) {
 			uploadThreshold = DEFAULT_UPLOAD_THRESHOLD_SIZE;
 		}
-		uploadMaximum = strToInt(bundle.getString(ChatConstants.PROPERTY_UPLOAD_MAXIMUM));
+		uploadMaximum = strToInt(readResource(bundle, ChatConstants.PROPERTY_UPLOAD_MAXIMUM));
 		if (uploadMaximum == null) {
 			uploadMaximum = DEFAULT_UPLOAD_MAX_FILE_SIZE;
 		}
-		uploadRequest = strToInt(bundle.getString(ChatConstants.PROPERTY_UPLOAD_REQUEST));
+		uploadRequest = strToInt(readResource(bundle, ChatConstants.PROPERTY_UPLOAD_REQUEST));
 		if (uploadRequest == null) {
 			uploadRequest = DEFAULT_UPLOAD_REQUEST_SIZE;
 		}
 		
+	}
+	
+	private String readResource(ResourceBundle bundle, String resourcePath) {
+		try {
+			return bundle.getString(resourcePath);
+		} catch (MissingResourceException mre) {
+			logger.warn(mre);
+			return null;
+		}
 	}
 
 	private String checkAndCreateFile(String dataDir) {
@@ -222,7 +234,7 @@ public class ChatConfiguration {
 		Integer output;
 		try {
 			output = Integer.parseInt(input);
-		} catch (NumberFormatException nfe) {
+		} catch (Exception nfe) {
 			output = null;
 		}
 		return output;

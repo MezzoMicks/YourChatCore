@@ -114,6 +114,7 @@ public class DefaultInputProcessorService implements InputProcessorService {
 	
 	@Override
 	public Segment[] process(ChatUser user, String message, InputStream uploadStream, String uploadName) {
+		logger.debug("processing segments for user[" + user + "] message[" + message + "] upload[" + uploadName + "]");
 		boolean processed = false;
 		// no system-message-injections!
 		if (message.startsWith("$")) {
@@ -151,7 +152,7 @@ public class DefaultInputProcessorService implements InputProcessorService {
 		// now is there stuff left to do?
 		if (!processed) {
 			// then it's about to parse the message for it's actual content
-			List<Segment> segments = parseSegments(user.getUserName(), message, uploadStream, uploadName);
+			List<Segment> segments = parseSegments(user != null ? user.getUserName() : "$system", message, uploadStream, uploadName);
 			segmentsArray = segments.toArray(new Segment[segments.size()]);
 		}
 		return segmentsArray;

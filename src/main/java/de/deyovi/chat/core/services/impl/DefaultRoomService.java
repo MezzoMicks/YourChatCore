@@ -24,38 +24,48 @@ public class DefaultRoomService implements RoomService {
 	private final Room defaultRoom;
 
 	private DefaultRoomService() {
+		// for later, we will need a default room
 		Room defaultRoom = null;
 		logger.info("Setting up Channels");
-		for (String channel : ChatConfiguration.getChannels()) {
-			// hidden
+		// cycle through all configured rooms
+		for (String channel : ChatConfiguration.getRooms()) {
 			String name = channel;
 			String color;
+			// find the first pipe-symbol
 			int ixOfPipe = name.indexOf('|');
+			String motd4room;
+			// in case there's one
 			if (ixOfPipe >= 0) {
-				ixOfPipe = name.indexOf('|', ixOfPipe + 1);
-				if (ixOfPipe >= 0) {
-					color = name.substring(ixOfPipe + 1, ixOfPipe);
+				// let's find the next one
+				int ixOf2ndPipe = name.indexOf('|', ixOfPipe + 1);
+				// if there's a second pipe
+				if (ixOf2ndPipe >= 0) {
+					// the color is between those two
+					color = name.substring(ixOfPipe + 1, ixOf2ndPipe);
+					// and the message of the day is after that
+					motd4room = name.substring(ixOf2ndPipe + 1);
 				} else {
+					// the color is after that
 					color = name.substring(ixOfPipe + 1);
+					// and there's not motd
+					motd4room = null;
 				}
 				name = name.substring(0, ixOfPipe);
+			// there's no pipe
 			} else {
+				// so default background color (white)
 				color = "FFFFFF";
-			}
-			ixOfPipe = name.indexOf('|');
-			String motd4room;
-			if (ixOfPipe >= 0) {
-				motd4room = name.substring(ixOfPipe + 1);
-				name = name.substring(0, ixOfPipe);
-			} else {
+				// and no motd
 				motd4room = null;
 			}
 			logger.info("Room : " + name + " (" + color + ")");
+			// lets create the room-object
 			Room room = new DefaultRoom(name, false);
 			room.setColor(color);
 			room.setOpen(true);
 			room.setAnonymous(false);
 			mains.put(name.toLowerCase(), room);
+			// no default room yet, let's take the first one
 			if (defaultRoom == null) {
 				defaultRoom = room;
 			}

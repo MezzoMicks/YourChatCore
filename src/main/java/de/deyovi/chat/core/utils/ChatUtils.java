@@ -7,11 +7,21 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
@@ -28,28 +38,35 @@ public class ChatUtils {
 
 	private final static Logger logger = Logger.getLogger(ChatUtils.class);
 
-	public static String createAndStoreResized(String prefix, InputStream stream, String filename, int width, int height, Color backdrop) throws IOException {
+	public static String createAndStoreResized(String prefix,
+			InputStream stream, String filename, int width, int height,
+			Color backdrop) throws IOException {
 		logger.info("Creating Thumbnail for " + filename);
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		ChatUtils.createResized(stream, bos, width, height, null);
 		return store(prefix, filename, bos);
 	}
-	
-	public static String createAndStoreResized(String prefix, BufferedImage image, String filename, int width, int height, Color backdrop) throws IOException {
+
+	public static String createAndStoreResized(String prefix,
+			BufferedImage image, String filename, int width, int height,
+			Color backdrop) throws IOException {
 		logger.info("Creating Thumbnail for " + filename);
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		ChatUtils.createResized(image, bos, width, height, null);
 		return store(prefix, filename, bos);
 	}
-	
+
 	/**
-	 * Creates a thumbnail for an image, resulting in an imagefile of reduced size and lower quality
+	 * Creates a thumbnail for an image, resulting in an imagefile of reduced
+	 * size and lower quality
+	 * 
 	 * @param url
 	 * @param target
 	 * @param width
 	 * @param height
 	 */
-	public static void createResized(InputStream input, OutputStream output, int targetWidth, int targetHeight, Color backdrop) {
+	public static void createResized(InputStream input, OutputStream output,
+			int targetWidth, int targetHeight, Color backdrop) {
 		try {
 			ImageInputStream iios = ImageIO.createImageInputStream(input);
 			BufferedImage src = ImageIO.read(iios);
@@ -58,34 +75,40 @@ public class ChatUtils {
 			logger.error(e);
 		}
 	}
-	
-	public static void createResized(BufferedImage image, OutputStream output, int targetWidth, int targetHeight, Color backdrop) {
+
+	public static void createResized(BufferedImage image, OutputStream output,
+			int targetWidth, int targetHeight, Color backdrop) {
 		try {
 			if (image != null) {
 				int width = image.getWidth();
 				int height = image.getHeight();
-				int[] thumbsize = getThumbsize(width, height, targetWidth, targetHeight);
+				int[] thumbsize = getThumbsize(width, height, targetWidth,
+						targetHeight);
 				if (targetWidth < 0) {
 					targetWidth = thumbsize[0];
-				} 
+				}
 				if (targetHeight < 0) {
 					targetHeight = thumbsize[1];
 				}
 				logger.debug("Instanciating thumbnail");
-				BufferedImage thumbnail = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
+				BufferedImage thumbnail = new BufferedImage(targetWidth,
+						targetHeight, BufferedImage.TYPE_INT_RGB);
 				// draw original image to thumbnail image object and
 				// scale it to the new size on-the-fly
 				logger.debug("creating 'graphics' for thumbnail");
 				Graphics2D graphics2D = thumbnail.createGraphics();
-				graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+				graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+						RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 				graphics2D.setColor(backdrop != null ? backdrop : Color.WHITE);
 				logger.debug("filling with white");
 				graphics2D.fillRect(0, 0, targetWidth, targetHeight);
 				logger.debug("drawing actual image to thumbnail");
-				graphics2D.drawImage(image, thumbsize[2], thumbsize[3], thumbsize[0], thumbsize[1], null);
+				graphics2D.drawImage(image, thumbsize[2], thumbsize[3],
+						thumbsize[0], thumbsize[1], null);
 				// Compress the Image to an lower quality JPEG
 				logger.debug("Preparing JPEG-ImageWriter");
-				Iterator<ImageWriter> i = ImageIO.getImageWritersByFormatName("jpeg");
+				Iterator<ImageWriter> i = ImageIO
+						.getImageWritersByFormatName("jpeg");
 				// Just get the first JPEG writer available
 				ImageWriter writer = i.next();
 				// Set the compression quality to 0.75
@@ -107,11 +130,11 @@ public class ChatUtils {
 		}
 	}
 
-	private final static char[] GOOD_ONES = new char[] {
-		'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
-		'0','1','2','3','4','5','6','7','8','9','0','.','-','_','+'
-	};
-	
+	private final static char[] GOOD_ONES = new char[] { 'a', 'b', 'c', 'd',
+			'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q',
+			'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3',
+			'4', '5', '6', '7', '8', '9', '0', '.', '-', '_', '+' };
+
 	private static boolean isGoodOne(char ch) {
 		for (char good : GOOD_ONES) {
 			if (Character.toLowerCase(ch) == good) {
@@ -120,9 +143,11 @@ public class ChatUtils {
 		}
 		return false;
 	}
-	
+
 	/**
-	 * Replaces the special characters inside a String with underscores '_' or a matching substitue 'ä'="ae"
+	 * Replaces the special characters inside a String with underscores '_' or a
+	 * matching substitue 'ä'="ae"
+	 * 
 	 * @param input
 	 * @return replaced string
 	 */
@@ -168,18 +193,21 @@ public class ChatUtils {
 		}
 		return new String(result);
 	}
-	
+
 	/**
-	 * Calculates the size of a thumbnail and it's position within the canvas, so that it has a proper alignment (centered)
+	 * Calculates the size of a thumbnail and it's position within the canvas,
+	 * so that it has a proper alignment (centered)
+	 * 
 	 * @param width
 	 * @param height
 	 * @param maxWidth
 	 * @param maxHeight
 	 * @return int[] 0 = width; 1 = height; 2 = posX; 3 = posY
 	 */
-	private static int[] getThumbsize(int width, int height, int maxWidth, int maxHeight) {
+	private static int[] getThumbsize(int width, int height, int maxWidth,
+			int maxHeight) {
 		if (width == height) {
-			return new int[] { maxWidth, maxHeight, 0, 0};
+			return new int[] { maxWidth, maxHeight, 0, 0 };
 		} else {
 			// proportional rescale
 			if (maxWidth == -1 || maxHeight == -1) {
@@ -187,13 +215,13 @@ public class ChatUtils {
 				if (maxWidth > 0) {
 					height = (int) ((maxWidth / (double) width) * height);
 					width = maxWidth;
-				// scale over height
+					// scale over height
 				} else if (maxHeight > 0) {
 					width = (int) ((maxHeight / (double) height) * width);
 					height = maxHeight;
 				} // no scale? if both <= 0
-				return new int[] {width, height, 0, 0};
-			// full rescale in canvas
+				return new int[] { width, height, 0, 0 };
+				// full rescale in canvas
 			} else {
 				int bigSide;
 				int smallSide;
@@ -223,60 +251,66 @@ public class ChatUtils {
 				int position = (int) ((smallerMax - newSmallSide) / 2);
 				// Return the Values at their proper indicies
 				if (widthIsBigger) {
-					return new int[] {biggerMax, newSmallSide, 0, position};
+					return new int[] { biggerMax, newSmallSide, 0, position };
 				} else {
-					return new int[] {newSmallSide, biggerMax, position, 0};
+					return new int[] { newSmallSide, biggerMax, position, 0 };
 				}
 			}
-//			if (width > height) {
-//				newWidth = maxWidth;
-//				newHeight = (int) ((newWidth * height) / width);
-//	
-//				newPosX = 0;
-//				newPosY = (int) ((maxHeight - newHeight) / 2);
-//			} else {
-//				newHeight = maxHeight;
-//				newWidth = (int) ((newHeight * width) / height);
-//	
-//				newPosX = (int) ((maxWidth - newWidth) / 2);
-//				newPosY = 0;
-//			}
-//	
-//			return new int[] { newWidth,  newHeight, newPosX, newPosY };
+			// if (width > height) {
+			// newWidth = maxWidth;
+			// newHeight = (int) ((newWidth * height) / width);
+			//
+			// newPosX = 0;
+			// newPosY = (int) ((maxHeight - newHeight) / 2);
+			// } else {
+			// newHeight = maxHeight;
+			// newWidth = (int) ((newHeight * width) / height);
+			//
+			// newPosX = (int) ((maxWidth - newWidth) / 2);
+			// newPosY = 0;
+			// }
+			//
+			// return new int[] { newWidth, newHeight, newPosX, newPosY };
 		}
 	}
-	
+
 	/**
-	 * Lays an transparent overlay over the Image
-	 * Snippet: thanks to Josiah Hester on javalobby.org
+	 * Lays an transparent overlay over the Image Snippet: thanks to Josiah
+	 * Hester on javalobby.org
+	 * 
 	 * @param upload
 	 * @throws IOException
 	 * @throws FileNotFoundException
 	 */
-	public static void makeImageMoreTransparent(InputStream input, OutputStream output, Color backdrop) throws IOException {
+	public static void makeImageMoreTransparent(InputStream input,
+			OutputStream output, Color backdrop) throws IOException {
 		BufferedImage bgImage;
 		bgImage = ImageIO.read(input);
-		BufferedImage newImg = new BufferedImage(bgImage.getWidth(), bgImage.getHeight(), BufferedImage.TYPE_INT_RGB);  
-		// Get the images graphics  
-		Graphics2D g = newImg.createGraphics();  
+		BufferedImage newImg = new BufferedImage(bgImage.getWidth(),
+				bgImage.getHeight(), BufferedImage.TYPE_INT_RGB);
+		// Get the images graphics
+		Graphics2D g = newImg.createGraphics();
 		if (backdrop != null) {
 			g.setColor(backdrop);
 			g.fillRect(0, 0, bgImage.getWidth(), bgImage.getHeight());
 		}
-		// Set the Graphics composite to Alpha  
-		g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f));  
-		// Draw the LOADED img into the prepared receiver image  
-		g.drawImage(bgImage, null, 0, 0);  
-		// let go of all system resources in this Graphics  
+		// Set the Graphics composite to Alpha
+		g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER,
+				0.25f));
+		// Draw the LOADED img into the prepared receiver image
+		g.drawImage(bgImage, null, 0, 0);
+		// let go of all system resources in this Graphics
 		g.dispose();
 		ImageOutputStream ios = ImageIO.createImageOutputStream(output);
 		ImageIO.write(newImg, "png", ios);
-	    ios.close();
+		ios.close();
 	}
 
-	private static String store(String prefix, String filename, ByteArrayOutputStream bos) {
+	private static String store(String prefix, String filename,
+			ByteArrayOutputStream bos) {
 		ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
-		String name = ChatUtils.replaceSpecialChars(filename != null ? filename : "unknown");
+		String name = ChatUtils.replaceSpecialChars(filename != null ? filename
+				: "unknown");
 		int lastIxOfDot = name.lastIndexOf('.');
 		if (lastIxOfDot >= 0) {
 			name = name.substring(0, lastIxOfDot);
@@ -285,7 +319,7 @@ public class ChatUtils {
 		name = DefaultFileStoreService.getInstance().store(bis, prefix + name);
 		return name;
 	}
-	
+
 	public static String escape(String input) {
 		if (input == null) {
 			return null;
@@ -296,5 +330,79 @@ public class ChatUtils {
 		}
 	}
 
+	public static List<String> getClassNamesFromPackage(String packageName, boolean recurse) {
+		List<String> names = new LinkedList<String>();
+		// Use the current ClassLoader
+		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+		// Create a Resource-URL from the given packageName (replacing dots with slashes)
+		URL packageURL = classLoader.getResource(packageName.replace(".", "/"));
+		// Figure if the Resource points into a jar
+		if (packageURL.getProtocol().equals("jar")) {
+			try {
+				// build jar file name, then loop through zipped entries
+				String jarFileName = URLDecoder.decode(packageURL.getFile(), "UTF-8");
+				jarFileName = jarFileName.substring(5, jarFileName.indexOf("!"));
+				// Create iteratable JarFile from JarFileName
+				JarFile jarFile = new JarFile(jarFileName);
+				Enumeration<JarEntry> jarEntries = jarFile.entries();
+				while (jarEntries.hasMoreElements()) {
+					String entryName = jarEntries.nextElement().getName();
+					if (entryName.startsWith(packageName)) {
+						if (entryName.endsWith(".class")) {
+							names.add(packageName + "." + entryName.substring(0, entryName.length() - 6));
+						} else if (recurse) {
+							names.addAll(getClassNamesFromPackage(packageName + "." + entryName, recurse));
+						}
+					}
+				}
+				jarFile.close();
+			} catch (IOException ioex) {
+				logger.error("Error while scanning " + packageURL.toString() + " for Classes");
+			}
+		} else {
+			// loop through files in classpath
+			try {
+				URI uri = new URI(packageURL.toString());
+				File folder = new File(uri.getPath());
+				// won't work with path which contains blank (%20)
+				// File folder = new File(packageURL.getFile());
+				File[] content = folder.listFiles();
+				for (File file : content) {
+					String fileName = file.getName();
+					if (fileName.endsWith(".class")) {
+						fileName = fileName.substring(0, fileName.length() - 6);
+						names.add(packageName + "." + fileName);
+					} else if (file.isDirectory() && recurse) {
+						names.addAll(getClassNamesFromPackage(packageName + "." + fileName, recurse));
+					}
+				}
+			} catch (URISyntaxException e) {
+				logger.error("Error while scanning directory:" + packageName, e);
+			}
+		}
+		return names;
+	}
 	
+	public static boolean checkInheritance(Class clazz, Class superclass) {
+		if (superclass != null) {
+			Class<?>[] interfaces = clazz.getInterfaces();
+			Class clazzesSuperClass = clazz.getSuperclass();
+			if (superclass.equals(clazzesSuperClass)) {
+				return true;
+			} else {
+				if (clazzesSuperClass != null && checkInheritance(clazzesSuperClass, superclass)) {
+					return true;
+				} else {
+					for (Class<?> iface : interfaces) {
+						if (iface.equals(superclass)) {
+							return true;
+						} else if (checkInheritance(iface, superclass)) {
+							return true;
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
 }
