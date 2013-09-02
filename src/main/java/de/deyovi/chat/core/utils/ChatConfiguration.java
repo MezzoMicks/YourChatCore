@@ -189,6 +189,8 @@ public class ChatConfiguration {
 		if (uploadRequest == null) {
 			uploadRequest = DEFAULT_UPLOAD_REQUEST_SIZE;
 		}
+
+		invitationRequired = Boolean.parseBoolean(readResource(bundle, ChatConstants.PROPERTY_INVITATION_REQUIRED));
 		
 	}
 	

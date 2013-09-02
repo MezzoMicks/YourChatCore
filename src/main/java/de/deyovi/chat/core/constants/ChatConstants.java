@@ -140,6 +140,7 @@ public class ChatConstants {
 	public final static String PROPERTY_UPLOAD_THRESHOLD = "de.deyovi.chat.upload.threshold";
 	public final static String PROPERTY_UPLOAD_MAXIMUM = "de.deyovi.chat.upload.maximum";
 	public final static String PROPERTY_UPLOAD_REQUEST = "de.deyovi.chat.upload.request";
+	public final static String PROPERTY_INVITATION_REQUIRED = "de.deyovi.chat.invitation.required";
 	
 	public enum ImageSize {
 		ORIGINAL("", -1), PREVIEW("preview_", 280), THUMBNAIL("thumb_", 160), PINKY("pinky_", 64),;
