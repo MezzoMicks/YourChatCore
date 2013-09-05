@@ -36,6 +36,7 @@ public class ChatConfiguration {
 	private Integer uploadMaximum = null;
 	private Integer uploadRequest = null;
 	private List<String> extraPlugins = new LinkedList<String>();
+	private String urlPrefix = null;
 
 	public ChatConfiguration() {
 		try {
@@ -99,6 +100,10 @@ public class ChatConfiguration {
 		return instance.uploadThreshold;
 	}
 
+	public static String getUrlPrefix() {
+		return instance.urlPrefix;
+	}
+	
 	public static File createTempDirectory(File parent) throws IOException {
 		final File temp = File.createTempFile("yourchat", "tmp", parent);
 
@@ -192,6 +197,10 @@ public class ChatConfiguration {
 
 		invitationRequired = Boolean.parseBoolean(readResource(bundle, ChatConstants.PROPERTY_INVITATION_REQUIRED));
 		
+		urlPrefix = readResource(bundle, ChatConstants.PROPERTY_URL_PREFIX);
+		if (urlPrefix == null) {
+			urlPrefix = "";
+		}
 	}
 	
 	private String readResource(ResourceBundle bundle, String resourcePath) {
