@@ -44,8 +44,8 @@ import javax.persistence.Table;
 	query="SELECT count(m.id) " //
 		+ "FROM PrivateMessageEntity m " //
 		+ "WHERE m.recipient = :user " //
-		+ "AND m.read = false" //
-)
+		+ "AND m.read = FALSE " //
+	),
 })
 public class PrivateMessageEntity {
 
