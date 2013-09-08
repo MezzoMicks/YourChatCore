@@ -24,6 +24,7 @@ import de.deyovi.chat.core.objects.impl.SystemMessage;
 import de.deyovi.chat.core.services.ChatUserService;
 import de.deyovi.chat.core.services.EntityService;
 import de.deyovi.chat.core.services.ProfileService;
+import de.deyovi.chat.core.services.RoomService;
 import de.deyovi.chat.core.utils.ChatConfiguration;
 import de.deyovi.chat.core.utils.PasswordUtil;
 
@@ -42,6 +43,7 @@ public class DefaultChatUserService implements ChatUserService {
 	private final static long AWAY_TIMEOUT = 6 * TIMEOUT;
 
 	private static final ChatUserService _instance = new DefaultChatUserService();
+	private final Room defaultRoom;
 	
 	
 	public static ChatUserService getInstance() {
@@ -57,6 +59,7 @@ public class DefaultChatUserService implements ChatUserService {
 	private DefaultChatUserService() {
 		timeoutThread = new MyTimeoutThread();
 		timeoutThread.start();
+		defaultRoom = DefaultRoomService.getInstance().getDefault();
 	}
 	
 	public ChatUser login(String username, String pwHash, String sugar) {
@@ -64,6 +67,8 @@ public class DefaultChatUserService implements ChatUserService {
 		ChatUser result = validatePassword(username, pwHash, sugar);
 		if (result == null) {
 			logger.info("User[" + username + "] tried to login, invalid Username or Password supplied!");
+		} else {
+			defaultRoom.join(result);
 		}
 		return result;
 	}

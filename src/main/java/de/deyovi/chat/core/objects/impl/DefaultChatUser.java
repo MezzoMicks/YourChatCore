@@ -5,6 +5,9 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import de.deyovi.chat.core.objects.ChatUser;
 import de.deyovi.chat.core.objects.ChatUserSettings;
 import de.deyovi.chat.core.objects.Message;
@@ -13,6 +16,8 @@ import de.deyovi.chat.core.objects.Room;
 
 public class DefaultChatUser implements ChatUser, Comparable<ChatUser> {
 
+	private final static Logger logger = LogManager.getLogger(DefaultChatUser.class);
+	
 	/**
 	 * 
 	 */
@@ -127,6 +132,7 @@ public class DefaultChatUser implements ChatUser, Comparable<ChatUser> {
 		if (queue.size() >= MAX_QUEUE_SIZE) {
 			return false;
 		} else {
+			logger.debug("pushed Message " + message + " to user[" + this + "]");
 			return queue.offer(new UserMessage(message, messageIds.getAndIncrement()));
 		}
 	}

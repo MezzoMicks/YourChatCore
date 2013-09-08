@@ -85,6 +85,7 @@ public class DefaultRoomService implements RoomService {
 	
 	public synchronized static void createInstance() {
 		if (instance == null) {
+			logger.debug("creating instance for " + DefaultRoomService.class.getName());
 			instance = new DefaultRoomService();
 		}
 	}

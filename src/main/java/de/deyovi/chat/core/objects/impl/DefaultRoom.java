@@ -174,6 +174,7 @@ public class DefaultRoom implements Room {
 			// and set this as his room
 			user.setCurrentRoom(this);
 			users.add(user);
+			user.push(new SystemMessage(user, nextId(), MessagePreset.SWITCH_CHANNEL, getName(), getColor()));
 			if (motd != null) {
 				user.push(motd);
 			}

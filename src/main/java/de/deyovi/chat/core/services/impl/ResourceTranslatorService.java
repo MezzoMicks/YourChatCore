@@ -42,7 +42,7 @@ public class ResourceTranslatorService implements TranslatorService {
 	private static synchronized ResourceBundle createInstance(Locale locale) {
 		ResourceBundle instance = lang2resource.get(locale);
 		if (instance == null) {
-			instance = ResourceBundle.getBundle("MessageBundle", locale);
+			instance = ResourceBundle.getBundle("de.deyovi.chat.messages", locale);
 			lang2resource.put(locale, instance);
 		}
 		return instance;
@@ -81,7 +81,7 @@ public class ResourceTranslatorService implements TranslatorService {
 		// parse the input
 		List<String> arguments = parse(rawMessage);
 		// remove the first element (it's the message-id)
-		String message = messages.getString(arguments.remove(0));
+		String message = messages.getString(arguments.remove(0).substring(1));
 		// create a formatter with our message
 		MessageFormat formatter = new MessageFormat(message, messages.getLocale());
 		// and pass our arguments to the function

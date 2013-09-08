@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 import javax.activation.MimetypesFileTypeMap;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import de.deyovi.chat.core.constants.ChatConstants.ChatCommand;
@@ -39,7 +40,7 @@ import de.deyovi.chat.core.utils.ChatConfiguration;
 
 public class DefaultInputProcessorService implements InputProcessorService {
 
-	private final static Logger logger = Logger.getLogger(DefaultInputProcessorService.class);
+	private final static Logger logger = LogManager.getLogger(DefaultInputProcessorService.class);
 	
 	/*
 	 * RegExp for URL-Identification taken from Justin Saunders@regexlib.com
@@ -169,6 +170,7 @@ public class DefaultInputProcessorService implements InputProcessorService {
 		String [] parts = input.split("\\s");
         // Attempt to convert each item into an URL.   
         for(String item : parts ) {
+        	logger.debug("checking segment " + item);
         	Segment[] newSegments = null;
         	// Let's interprete the input
         	for (InputSegmentInterpreter interpreter : processorMap.values()) {
@@ -176,6 +178,7 @@ public class DefaultInputProcessorService implements InputProcessorService {
         	}
         	// nobody processed the segment, assume that it is text
         	if (newSegments == null) {
+            	logger.debug("appending segment " + item + " as text");
 	        	// if the previous segment was already a String
 	        	Segment previous = result.isEmpty() ? null : result.getLast();
 				if (previous != null && previous.getType() == ContentType.TEXT) {
@@ -263,7 +266,7 @@ public class DefaultInputProcessorService implements InputProcessorService {
 			if (urlFlag == null) {
 				String content = getContent();
 				if (content != null && !(content = content.trim()).isEmpty()) {
-					if (content.indexOf("://") == -1 || content.startsWith("//")) {
+					if (content.startsWith("//")) {
 						content = "http://" + content;
 					}
 					try {
