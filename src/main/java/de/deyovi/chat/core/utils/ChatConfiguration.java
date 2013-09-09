@@ -197,12 +197,18 @@ public class ChatConfiguration {
 		if (uploadRequest == null) {
 			uploadRequest = DEFAULT_UPLOAD_REQUEST_SIZE;
 		}
-
 		invitationRequired = Boolean.parseBoolean(readResource(bundle, ChatConstants.PROPERTY_INVITATION_REQUIRED));
 		
 		urlPrefix = readResource(bundle, ChatConstants.PROPERTY_URL_PREFIX);
 		if (urlPrefix == null) {
 			urlPrefix = "";
+		}
+		
+		String pluginString = readResource(bundle, ChatConstants.PROPERTY_PLUGINS);
+		if (pluginString != null && !(pluginString = pluginString.trim()).isEmpty()) {
+			for (String plugin : pluginString.split(";")) {
+				extraPlugins.add(plugin);
+			}
 		}
 	}
 	

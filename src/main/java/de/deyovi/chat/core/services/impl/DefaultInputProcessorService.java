@@ -174,7 +174,10 @@ public class DefaultInputProcessorService implements InputProcessorService {
         	Segment[] newSegments = null;
         	// Let's interprete the input
         	for (InputSegmentInterpreter interpreter : processorMap.values()) {
-        		interpreter.interprete(new MyInterpretableSegment(username, input));
+        		newSegments = interpreter.interprete(new MyInterpretableSegment(username, item));
+        		if (newSegments != null) {
+        			break;
+        		}
         	}
         	// nobody processed the segment, assume that it is text
         	if (newSegments == null) {
@@ -188,11 +191,11 @@ public class DefaultInputProcessorService implements InputProcessorService {
 	        		//.. create a new Segment
 	        		newSegments = new Segment[] { new TextSegment(username, item) };
 	        	}
-	        	if (newSegments != null) {
-	        		for (Segment segment : newSegments) {
-	        			result.add(segment);
-	        		}
-	        	}
+        	}
+        	if (newSegments != null) {
+        		for (Segment segment : newSegments) {
+        			result.add(segment);
+        		}
         	}
         }
         // now take care of the upload!
@@ -267,7 +270,7 @@ public class DefaultInputProcessorService implements InputProcessorService {
 				String content = getContent();
 				if (content != null && !(content = content.trim()).isEmpty()) {
 					if (content.startsWith("//")) {
-						content = "http://" + content;
+						content = "http:" + content;
 					}
 					try {
 						url = new URL(content);
