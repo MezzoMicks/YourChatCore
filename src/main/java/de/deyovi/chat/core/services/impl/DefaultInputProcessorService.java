@@ -59,8 +59,7 @@ public class DefaultInputProcessorService implements InputProcessorService {
 		mimeTypesMap.addMimeTypes("video/3gp 3gp 3GP");
 		InputSegmentInterpreter imageProcessorPlugin = new ImageSegmentInterpreter();
 		processorMap.put(1, imageProcessorPlugin);
-		processorMap.put(101, new YoutubeProcessorPlugin());
-		int i = 102;
+		int i = 101;
 		for (String pluginClass : ChatConfiguration.getExtraPlugins()) {
 			InputSegmentInterpreter plugin = null;
 			try {
