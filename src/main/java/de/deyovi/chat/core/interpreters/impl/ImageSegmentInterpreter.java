@@ -31,7 +31,7 @@ public class ImageSegmentInterpreter implements InputSegmentInterpreter {
 			if (name == null || name.isEmpty()) {
 				name = "image_" + url.getHost();
 			} else {
-				int ixOfSlash = name.lastIndexOf(File.separatorChar);
+				int ixOfSlash = name.lastIndexOf('/');
 				name = name.substring(ixOfSlash + 1);
 			}
 			URLConnection urlConnection = segment.getConnection();
