@@ -1,5 +1,7 @@
 package de.deyovi.chat.core.services;
 
+import java.util.List;
+
 import de.deyovi.chat.core.objects.ChatUser;
 import de.deyovi.chat.core.objects.Message;
 
@@ -30,4 +32,6 @@ public interface ChatUserService {
 
 	public ChatUser register(String username, String password, String invitationKey, String sugar);
 
+	public List<ChatUser> getLoggedInUsers();
+	
 }

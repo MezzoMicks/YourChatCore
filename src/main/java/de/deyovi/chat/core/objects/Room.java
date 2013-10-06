@@ -5,11 +5,6 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
-import javax.xml.registry.infomodel.User;
-
-import de.deyovi.chat.core.objects.impl.DefaultChatUser;
-import de.deyovi.chat.core.objects.impl.SystemMessage;
-
 public interface Room {
 
 	public Collection<ChatUser> getUsers();
@@ -112,8 +107,6 @@ public interface Room {
 		 * @return Array of {@link MediaSegment}
 		 */
 		public Segment[] getMedia();
-		
-		public ChatUser[] getOtherUsers();
 		
 	}
 

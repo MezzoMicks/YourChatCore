@@ -15,10 +15,19 @@ public class DefaultChatUserDAO implements ChatUserDAO {
 
 	private static final Logger logger = Logger.getLogger(DefaultChatUserDAO.class);
 
-	private static final ChatUserDAO _instance = new DefaultChatUserDAO();;
+	private static ChatUserDAO _instance = null;
 	
 	public static ChatUserDAO getInstance() {
+		if (_instance == null) {
+			createInstance();
+		}
 		return _instance;
+	}
+	
+	private static synchronized void createInstance() {
+		if (_instance == null) {
+			_instance = new DefaultChatUserDAO();
+		}
 	}
 	
 	private EntityService entityService = DefaultEntityService.getInstance();

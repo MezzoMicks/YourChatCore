@@ -210,7 +210,7 @@ public class DefaultRoom implements Room {
 					usersArray[i++] = tmp;
 				}
 			} else {
-				usersArray = null;
+				usersArray = new ChatUser[0];;
 			}
 			if (member && protokollSegment != null) {
 				mediaArray = new DefaultSegment[media.size() + 1];
@@ -220,15 +220,15 @@ public class DefaultRoom implements Room {
 					mediaArray[i++] = e;
 				}
 			} else {
-				mediaArray = null;
+				mediaArray = new Segment[0];
 			}
 		} else {
 			name = null;
 			bgColor = null;
 			fgColor = null;
 			bgImage = null;
-			usersArray = null;
-			mediaArray = null;
+			usersArray = new ChatUser[0];;
+			mediaArray = new Segment[0];;
 		}
 		return new MyRoomInfo(name, bgColor, fgColor,bgImage, usersArray, mediaArray);
 	}
@@ -339,7 +339,6 @@ public class DefaultRoom implements Room {
 		private final String bgImage;
 		private final ChatUser[] users;
 		private final Segment[] media;
-		private ChatUser[] otherUsers;
 		
 		private MyRoomInfo(String name, String bgColor, String fgColor, String bgImage, ChatUser[] users, Segment[] media) {
 			this.name = name;
@@ -379,11 +378,6 @@ public class DefaultRoom implements Room {
 		@Override
 		public Segment[] getMedia() {
 			return media;
-		}
-		
-		@Override
-		public ChatUser[] getOtherUsers() {
-			return otherUsers;
 		}
 		
 	}

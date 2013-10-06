@@ -13,10 +13,19 @@ public class DefaultImageDAO implements ImageDAO {
 	
 	private static final Logger logger = Logger.getLogger(DefaultImageDAO.class);
 
-	private static final ImageDAO _instance = new DefaultImageDAO();
+	private static volatile ImageDAO _instance = new DefaultImageDAO();
 	
 	public static ImageDAO getInstance() {
+		if (_instance == null) {
+			createInstance();
+		}
 		return _instance;
+	}
+	
+	private static void createInstance() {
+		if (_instance == null) {
+			_instance = new DefaultImageDAO();
+		}
 	}
 	
 	

@@ -35,7 +35,7 @@ public class DefaultProfileService implements ProfileService {
 	
 	private final static Logger logger = Logger.getLogger(DefaultProfileService.class);
 
-	private static final ProfileService instance = new DefaultProfileService();
+	private volatile static ProfileService _instance;
 	
 	private final ImageDAO imageDAO = DefaultImageDAO.getInstance();
 	private final ProfileDAO profileDAO = DefaultProfileDAO.getInstance();
@@ -43,7 +43,16 @@ public class DefaultProfileService implements ProfileService {
 	private final EntityService entityService = DefaultEntityService.getInstance();
 	
 	public static ProfileService getInstance() {
-		return instance;
+		if (_instance == null) {
+			createInstance();
+		}
+		return _instance;
+	}
+	
+	private static synchronized void createInstance() {
+		if (_instance == null) {
+			_instance = new DefaultProfileService();
+		}
 	}
 	
 	public byte[] getImageData(long id, ImageSize size) {

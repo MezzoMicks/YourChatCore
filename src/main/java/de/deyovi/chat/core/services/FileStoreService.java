@@ -19,5 +19,13 @@ public interface FileStoreService {
 	 * @param name
 	 */
 	public abstract boolean load(OutputStream os, String name);
+	
+
+
+	/**
+	 * Loads a File to the OutputStream by it's name
+	 * @param name
+	 */
+	public abstract InputStream load(String name);
 
 }

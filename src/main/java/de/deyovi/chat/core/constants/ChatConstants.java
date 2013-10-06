@@ -159,6 +159,19 @@ public class ChatConstants {
 			return prefix;
 		}
 		
+		public static ImageSize getByPrefix(String prefix) {
+			if (prefix != null) {
+				for (ImageSize value : values()) {
+					if (value != ORIGINAL) {
+						if (value.prefix.startsWith(prefix)) {
+							return value;
+						}
+					}
+				}
+			}
+			return ORIGINAL;
+		}
+		
 		public int getSize() {
 			return size;
 		}

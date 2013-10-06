@@ -124,6 +124,18 @@ public class DefaultFileStoreService implements FileStoreService {
 		}
 	}
 	
+	public InputStream decrypt(InputStream is) {
+		if (secKey == null) {
+			if (safeMode) {
+				logger.warn("Fallback to unsafemode, due to lacking Key!");
+			}
+			return is;
+		} else {
+			CipherInputStream cis = new CipherInputStream(is, getCipher(Cipher.DECRYPT_MODE));
+			return new WrappedInputStream(cis);
+		}
+	}
+	
 	/* (non-Javadoc)
 	 * @see de.deyovi.chat.core.service.impl.FileStoreService#store(java.io.InputStream, java.lang.String)
 	 */
@@ -181,6 +193,57 @@ public class DefaultFileStoreService implements FileStoreService {
 		return success;
 	}
 	
+	public InputStream load(String name) {
+		logger.info("loading " + name);
+		File sourceFile = new File(dataDir, name);
+		InputStream input = null;
+		try {
+			logger.debug("loading " + name + " from " + sourceFile.getName());
+			FileInputStream fis = new FileInputStream(sourceFile);
+			input = decrypt(fis);
+		} catch (FileNotFoundException e) {
+			logger.error("error while loading " + name + " to " + sourceFile.getAbsolutePath(), e);
+		} catch (IOException e) {
+			logger.error("error while loading " + name + " to " + sourceFile.getAbsolutePath(), e);
+		}
+		return input;
+	}
+	
+
+	private class WrappedInputStream extends InputStream {
+		
+		private int count = -1;
+		private int buffersize = 0;
+		private byte[] buffer = new byte[BLOCK_SIZE];
+		private final CipherInputStream cis;
+		
+		
+		private WrappedInputStream(CipherInputStream cis) {
+			this.cis = cis;
+		}
+		
+		@Override
+		public int read() throws IOException {
+			if (count == -1 || count == BLOCK_SIZE) {
+				buffersize = cis.read(buffer);
+				count = 0;
+			}
+			if (buffersize == -1 || count >= buffersize) {
+				return -1;
+			} else {
+				// mask to shift the signed byte value into the positive value (for int presentation)
+				return buffer[count++] & 0xFF;
+			}
+		}
+		
+		@Override
+		public void close() throws IOException {
+			super.close();
+			cis.close();
+		}
+		
+	}
+	
 	private Cipher getCipher(int mode) {
 		Cipher cipher = null;
 		try {
@@ -191,31 +254,5 @@ public class DefaultFileStoreService implements FileStoreService {
 		}
 		return cipher;
 	}
-	
-	// TODO write proper Test!
-	/*
-	public static void main(String[] args) throws Exception {
-		new ChatConfiguration().debug();
-		Provider[] providers = Security.getProviders();
-		for (Provider provider : providers) {
-			System.out.println(provider.getName());
-			Set<Service> services = provider.getServices();
-			for (Service service : services) {
-				System.out.println(" - " + service.getAlgorithm());
-				
-			}
-		}
-
-		String cleartextFile = "clearpic.png";
-
-		FileInputStream fis = new FileInputStream(cleartextFile);
-		FileStoreService fs = new DefaultFileStoreService(true);
-		String newName = fs.store(fis, "clearpic.png");
-		
-		String cleartextAgainFile = "clearpicagain.png";
-		FileOutputStream fos = new FileOutputStream(cleartextAgainFile);
-		fs.load(fos, newName);
-	}
-	*/
 
 }

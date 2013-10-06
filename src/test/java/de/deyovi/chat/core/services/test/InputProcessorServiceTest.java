@@ -25,6 +25,21 @@ public class InputProcessorServiceTest {
 		Segment[] process = service.process(null, "Hallo Welt", null, null);
 		assertEquals("Hallo Welt", process[0].getContent());
 	}
+
+	@Test
+	public void testComplexStringOutput() {
+		Segment[] process = service.process(null, "Hallo Welt. Du bist obertoll, aber weißt du was?! ich bin noch Obertoller.Als du!", null, null);
+		assertEquals("Hallo Welt. Du bist obertoll, aber weißt du was?! ich bin noch Obertoller.Als du!", process[0].getContent());
+	}
+	
+
+	@Test
+	public void testIncompleteURL() {
+		Segment[] process = service.process(null, "www.google.de", null, null);
+		assertEquals("http://www.google.de", process[0].getContent());
+		assertEquals(ContentType.WEBSITE, process[0].getType());
+	}
+	
 	
 	@Test
 	public void testSimpleURL() {

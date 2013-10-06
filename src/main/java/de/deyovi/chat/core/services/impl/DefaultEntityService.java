@@ -15,7 +15,7 @@ public class DefaultEntityService implements EntityService {
 
 	private final static Logger logger = Logger.getLogger(DefaultEntityService.class);
 
-	private final static EntityService instance = new DefaultEntityService();
+	private volatile static EntityService _instance = null;
 	private volatile EntityManagerFactory emf = null;
 
 	// = Persistence.createEntityManagerFactory("YourChatWeb")
@@ -25,8 +25,18 @@ public class DefaultEntityService implements EntityService {
 	}
 	
 	public static EntityService getInstance() {
-		return instance;
+		if (_instance == null) {
+			createInstance();
+		}
+		return _instance;
 	}
+	
+	private static synchronized void createInstance() {
+		if (_instance == null) {
+			_instance = new DefaultEntityService();
+		}
+	}
+	
 
 	public EntityManagerFactory getFactory() {
 		if (emf == null) {

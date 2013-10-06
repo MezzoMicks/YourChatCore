@@ -5,12 +5,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
+import java.net.Socket;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.UnknownHostException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.activation.MimetypesFileTypeMap;
@@ -25,7 +29,6 @@ import de.deyovi.chat.core.interpreters.InputSegmentInterpreter;
 import de.deyovi.chat.core.interpreters.InputSegmentInterpreter.InterpretableSegment;
 import de.deyovi.chat.core.interpreters.impl.ImageSegmentInterpreter;
 import de.deyovi.chat.core.interpreters.impl.VideoSegmentInterpreter;
-import de.deyovi.chat.core.interpreters.impl.YoutubeProcessorPlugin;
 import de.deyovi.chat.core.objects.ChatUser;
 import de.deyovi.chat.core.objects.Segment;
 import de.deyovi.chat.core.objects.Segment.ContentType;
@@ -46,15 +49,11 @@ public class DefaultInputProcessorService implements InputProcessorService {
 	 * RegExp for URL-Identification taken from Justin Saunders@regexlib.com
 	 * Thanks :)
 	 */
-	private final static String URL_REGEXP_START = "^(((ht|f)tp(s?))\\://)?(www.|[a-zA-Z].)[a-zA-Z0-9\\-\\.]+\\.(";
-	private final static String[] TLD_LIST = new String[] {
-		"com" , "de", "xxx", "edu", "gov", "mil", "net", "org", "biz", "info", "name", "museum", "us", "ca", "uk", "tv"
-	};
-	private final static String URL_REGEXP_END = ")(\\:[0-9]+)*(/($|[a-zA-Z0-9\\.\\,\\;\\?\\'\\\\\\+&amp;%\\$#\\=~_\\-]+))*$";
-	private static Pattern URL_REGEXP_PATTERN;
 	
 	private final static MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
 	private final static TreeMap<Integer, InputSegmentInterpreter> processorMap = new TreeMap<Integer, InputSegmentInterpreter>();
+	private final static Pattern pattern = Pattern.compile("([a-z0-9-.]*)\\.([a-z]{2,5})", Pattern.CASE_INSENSITIVE);
+	
 	static {
 		mimeTypesMap.addMimeTypes("video/3gp 3gp 3GP");
 		InputSegmentInterpreter imageProcessorPlugin = new ImageSegmentInterpreter();
@@ -77,17 +76,6 @@ public class DefaultInputProcessorService implements InputProcessorService {
 			}
 		}
 		processorMap.put(Integer.MAX_VALUE - 1, new VideoSegmentInterpreter());
-		
-		String tlds = "";
-		
-		for (i = 0; i < TLD_LIST.length; i++) {
-			if (i != 0) {
-				tlds += "|";
-			}
-			tlds += TLD_LIST[i];
-		}
-		URL_REGEXP_PATTERN = Pattern.compile(tlds, Pattern.CASE_INSENSITIVE);
-//		processorMap.put(Integer.MAX_VALUE, new WebisteSe());
 	}
 	
 	private static InputProcessorService _instance = null;
@@ -167,10 +155,32 @@ public class DefaultInputProcessorService implements InputProcessorService {
 		LinkedList<Segment> result = new LinkedList<Segment>();
 		// Split over every whitespacey character
 		String [] parts = input.split("\\s");
-        // Attempt to convert each item into an URL.   
         for(String item : parts ) {
         	logger.debug("checking segment " + item);
         	Segment[] newSegments = null;
+        	// check if content might be a public domain
+        	if (!item.contains("//")) {
+        		// see if it looks like a public hostname
+        		Matcher matcher = pattern.matcher(item);
+        		if (matcher.find()) {
+        			// if so...
+	        		Socket socket = new Socket();
+	        		boolean reachable = false;
+	        		try {
+	        			// we attempt to connect
+	        			socket.connect(new InetSocketAddress(item, 80), 250);
+	        			logger.debug("Testing assumed Host successful '" + item + "', prepending 'http://'");
+	        		    reachable = true;
+	        		} catch (Exception e) {
+	        			logger.debug("Testing assumed Host failed '" + item + "'", e);
+					} finally {            
+	        		    if (socket != null) try { socket.close(); } catch(IOException e) {}
+	        		}
+	        		if (reachable) {
+	        			item = "http://" + item;
+	        		}
+        		}
+        	}
         	// Let's interprete the input
         	for (InputSegmentInterpreter interpreter : processorMap.values()) {
         		newSegments = interpreter.interprete(new MyInterpretableSegment(username, item));

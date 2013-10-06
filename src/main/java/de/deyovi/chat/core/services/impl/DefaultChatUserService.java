@@ -1,9 +1,11 @@
 package de.deyovi.chat.core.services.impl;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -24,7 +26,6 @@ import de.deyovi.chat.core.objects.impl.SystemMessage;
 import de.deyovi.chat.core.services.ChatUserService;
 import de.deyovi.chat.core.services.EntityService;
 import de.deyovi.chat.core.services.ProfileService;
-import de.deyovi.chat.core.services.RoomService;
 import de.deyovi.chat.core.utils.ChatConfiguration;
 import de.deyovi.chat.core.utils.PasswordUtil;
 
@@ -42,12 +43,21 @@ public class DefaultChatUserService implements ChatUserService {
 	private final static long TIMEOUT = MINUTE * 60;
 	private final static long AWAY_TIMEOUT = 6 * TIMEOUT;
 
-	private static final ChatUserService _instance = new DefaultChatUserService();
+	private volatile static ChatUserService _instance;
 	private final Room defaultRoom;
 	
 	
 	public static ChatUserService getInstance() {
+		if (_instance == null) {
+			createInstance();
+		}
 		return _instance;
+	}
+	
+	private static synchronized void createInstance() {
+		if (_instance == null) {
+			_instance = new DefaultChatUserService();
+		}
 	}
 	
 	private final Thread timeoutThread;
@@ -359,6 +369,15 @@ public class DefaultChatUserService implements ChatUserService {
 				return false;
 			}
 		}
+	}
+	
+	@Override
+	public List<ChatUser> getLoggedInUsers() {
+		List<ChatUser> result = new ArrayList<ChatUser>(names2users.size());
+		for (String name : names2users.keySet()) {
+			result.add(names2users.get(name));
+		}
+		return result;
 	}
 	
 	/**
