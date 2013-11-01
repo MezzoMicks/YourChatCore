@@ -3,6 +3,12 @@ package de.deyovi.chat.core.constants;
 
 
 public class ChatConstants {
+	
+
+	public final static int MESSAGE_EVENT_NONE = 0;
+	public final static int MESSAGE_EVENT_STOP = 1;
+	public final static int MESSAGE_EVENT_REFRESH = 2;
+
 
 	/**
 	 * Enum of commands which can be triggered from within normal messages
@@ -57,33 +63,33 @@ public class ChatConstants {
 	public enum MessagePreset {
 		SYSTEM(-1, ""),
 		DEFAULT(0, ""),
-		SETTINGS(10, "$SETTINGS"),
-		DUPLICATESESSION(50, "$DUPLICATESESSION"),
-		REFRESH(51, null),
-		TIMEOUT(75, "$TIMEOUT"),
+		SETTINGS(10, "$SETTINGS", MESSAGE_EVENT_REFRESH),
+		DUPLICATESESSION(50, "$DUPLICATESESSION", MESSAGE_EVENT_STOP),
+		REFRESH(51, null, MESSAGE_EVENT_REFRESH),
+		TIMEOUT(75, "$TIMEOUT", MESSAGE_EVENT_STOP),
 		UNKNOWN_COMMAND(99, "$UNKNOWN_COMMAND{cmd=%s}"),
 		WELCOME(100, "$WELCOME{user=%s}"), 
 		MOTD(101, "$MOTD"),
-		CLEAR_LOG(102, "$CLEAR_LOG"),
-		CLEAR_MEDIA(103, "$CLEAR_MEDIA"),
-		SWITCH_CHANNEL(201, "$SWITCH_CHANNEL{channel=%s}{background=%s}"),
+		CLEAR_LOG(102, "$CLEAR_LOG", MESSAGE_EVENT_REFRESH),
+		CLEAR_MEDIA(103, "$CLEAR_MEDIA", MESSAGE_EVENT_REFRESH),
+		SWITCH_CHANNEL(201, "$SWITCH_CHANNEL{channel=%s}{background=%s}", MESSAGE_EVENT_REFRESH),
 		UNKNOWN_CHANNEL(202, "$UNKNOWN_CHANNEL{channel=%s}"),
-		JOIN_CHANNEL(203,"$JOIN_CHANNEL{user=%s}"),
-		LEFT_CHANNEL(204, "$LEFT_CHANNEL{user=%s}"),
+		JOIN_CHANNEL(203,"$JOIN_CHANNEL{user=%s}", MESSAGE_EVENT_REFRESH),
+		LEFT_CHANNEL(204, "$LEFT_CHANNEL{user=%s}", MESSAGE_EVENT_REFRESH),
 		CHANNEL_NOTALLOWED(205, "$CHANNEL_NOTALLOWED{channel=%s}"),
-		USER_AWAY(206, "$USER_AWAY{user=%s}"),
-		USER_BACK(207, "$USER_BACK{user=%s}"),
-		USER_ALIAS_SET(208, "$USER_ALIAS_SET{user=%s}{alias=%s}"),
-		USER_ALIAS_CLEARED(209, "$USER_ALIAS_CLEARED{user=%s}"),
+		USER_AWAY(206, "$USER_AWAY{user=%s}", MESSAGE_EVENT_REFRESH),
+		USER_BACK(207, "$USER_BACK{user=%s}", MESSAGE_EVENT_REFRESH),
+		USER_ALIAS_SET(208, "$USER_ALIAS_SET{user=%s}{alias=%s}", MESSAGE_EVENT_REFRESH),
+		USER_ALIAS_CLEARED(209, "$USER_ALIAS_CLEARED{user=%s}", MESSAGE_EVENT_REFRESH),
 		CREATE_NOGUEST(210, "$CREATE_NOGUEST"),
 		CREATE_NAMEGIVEN(211, "$CREATE_NAMEGIVEN{channel=%s}"),
-		CREATE_DONE(212, "$CREATE_DONE{channel=%s}"),
-		OPEN_CHANNEL(213, "$OPEN_CHANNEL{user=%s}"),
+		CREATE_DONE(212, "$CREATE_DONE{channel=%s}", MESSAGE_EVENT_REFRESH),
+		OPEN_CHANNEL(213, "$OPEN_CHANNEL{user=%s}", MESSAGE_EVENT_REFRESH),
 		OPEN_CHANNEL_ALREADY(214, "$OPEN_CHANNEL_ALREADY"),
-		CLOSE_CHANNEL(215, "$CLOSE_CHANNEL{user=%s}"),
+		CLOSE_CHANNEL(215, "$CLOSE_CHANNEL{user=%s}", MESSAGE_EVENT_REFRESH),
 		CLOSE_CHANNEL_ALREADY(216, "$CLOSE_CHANNEL_ALREADY"),
-		CHANNEL_BG_CHANGED(217, "$CHANNEL_BG_CHANGED"),
-		CHANNEL_FG_CHANGED(218, "$CHANNEL_FG_CHANGED"),
+		CHANNEL_BG_CHANGED(217, "$CHANNEL_BG_CHANGED", MESSAGE_EVENT_REFRESH),
+		CHANNEL_FG_CHANGED(218, "$CHANNEL_FG_CHANGED", MESSAGE_EVENT_REFRESH),
 		CHANNEL_PRIVATE(219, "$CHANNEL_PRIVATE{room=%s}"),
 		INVITE_NOGUEST(220, "$INVITE_NOGUEST"),
 		INVITE_USER(221, "$INVITE_USER{user=%s}{channel=%s}"),
@@ -106,10 +112,17 @@ public class ChatConstants {
 		
 		private final int code;
 		private final String content;
-
+		private final int event;
+		
 		private MessagePreset(int code, String content) {
+			this(code, content, MESSAGE_EVENT_NONE);
+		}
+		
+
+		private MessagePreset(int code, String content, int event) {
 			this.code = code;
 			this.content = content;
+			this.event = event;
 		}
 		
 		public int getCode() {
@@ -118,6 +131,10 @@ public class ChatConstants {
 		
 		public String getContent() {
 			return content;
+		}
+		
+		public int getEvent() {
+			return event;
 		}
 		
 		public static MessagePreset getByCode(int code) {

@@ -54,4 +54,8 @@ public interface ChatUser {
 
 	public Message read();
 
+	public void addMessageEventListener(MessageEventListener listener);
+
+	public void removeMessageEventListener(MessageEventListener listener);
+	
 }

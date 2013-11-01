@@ -1,5 +1,6 @@
 package de.deyovi.chat.core.services;
 
+import java.util.List;
 import java.util.Locale;
 
 public interface TranslatorService {
@@ -9,6 +10,15 @@ public interface TranslatorService {
 	 * @param rawMessage
 	 * @return translated Message
 	 */
-	public abstract String translate(String rawMessage, Locale locale);
+	public String translate(String rawMessage, Locale locale);
+
+	/**
+	 * Translates a Message for representation
+	 * @param parsedMessage
+	 * @return translated Message
+	 */
+	public String translate(List<String> parsedMessage, Locale locale);
+	
+	public List<String> parse(String input);
 
 }

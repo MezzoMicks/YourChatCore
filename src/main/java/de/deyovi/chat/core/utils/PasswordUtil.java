@@ -1,5 +1,6 @@
 package de.deyovi.chat.core.utils;
 
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Random;
@@ -66,9 +67,9 @@ public class PasswordUtil {
 		return new String(keyChars);
 	}
 	
-	public synchronized static String encrypt(String pwhash, String sugar) {
+	public synchronized static String encrypt(String password, String sugar) {
 		String result = null;
-		if (pwhash != null) {
+		if (password != null) {
 			try {
 				if (md == null) {
 					md = MessageDigest.getInstance(ALGORITHM);
@@ -76,13 +77,15 @@ public class PasswordUtil {
 					md.reset();
 				}
 				if (sugar != null) {
-					md.update(sugar.getBytes());
+					md.update(sugar.getBytes("UTF-8"));
 				}
-				md.update(pwhash.getBytes());
+				md.update(password.getBytes("UTF-8"));
 				byte[] digest = md.digest();
 				result = bytesToHex(digest);
 			} catch (NoSuchAlgorithmException e) {
-				logger.error("Error while creating a MessageDigester for algorithm: " + ALGORITHM);
+				logger.error("Error while creating a MessageDigester for algorithm: " + ALGORITHM, e);
+			} catch (UnsupportedEncodingException e) {
+				logger.error("Error while reading Bytes", e);
 			} finally {
 				if (md != null) {
 					md.reset();

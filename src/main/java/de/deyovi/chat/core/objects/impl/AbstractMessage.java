@@ -21,17 +21,6 @@ public abstract class AbstractMessage implements Message {
 	}
 	
 	@Override
-	public String toString() {
-		StringBuilder result = new StringBuilder();
-		result.append(getOrigin() != null ? getOrigin().getUserName() : "SYSTEM");
-		result.append("::");
-		for (Segment seg : getSegments()) {
-			result.append(seg.getContent());
-		}
-		return result.toString();
-	}
-
-	@Override
 	public int getCode() {
 		return code;
 	}
@@ -55,4 +44,15 @@ public abstract class AbstractMessage implements Message {
 		}
 	}
 	
+	@Override
+	public String toString() {
+		StringBuilder result = new StringBuilder();
+		result.append(getOrigin() != null ? getOrigin().getUserName() : "SYSTEM");
+		result.append("::");
+		for (Segment seg : getSegments()) {
+			result.append(seg.getContent());
+		}
+		return result.toString();
+	}
+
 }

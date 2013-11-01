@@ -1,6 +1,8 @@
 package de.deyovi.chat.core.objects.impl;
 
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
@@ -11,6 +13,7 @@ import org.apache.log4j.Logger;
 import de.deyovi.chat.core.objects.ChatUser;
 import de.deyovi.chat.core.objects.ChatUserSettings;
 import de.deyovi.chat.core.objects.Message;
+import de.deyovi.chat.core.objects.MessageEventListener;
 import de.deyovi.chat.core.objects.Profile;
 import de.deyovi.chat.core.objects.Room;
 
@@ -33,6 +36,7 @@ public class DefaultChatUser implements ChatUser, Comparable<ChatUser> {
 	private final String sessionId;
 	private final boolean guest;
 	private final transient Queue<Message> queue = new ConcurrentLinkedQueue<Message>();
+	private final List<MessageEventListener> eventListener = new LinkedList<MessageEventListener>();
 	private transient Room currentRoom = null;
 	private String listenId = "";
 	
@@ -133,8 +137,25 @@ public class DefaultChatUser implements ChatUser, Comparable<ChatUser> {
 			return false;
 		} else {
 			logger.debug("pushed Message " + message + " to user[" + this + "]");
-			return queue.offer(new UserMessage(message, messageIds.getAndIncrement()));
+			boolean accepted = queue.offer(new UserMessage(message, messageIds.getAndIncrement()));
+			if (accepted) {
+				notifyListeners();
+			}
+			return accepted;
 		}
+	}
+
+	private void notifyListeners() {
+		// do asynchronously, so we don't run into any blocking by stupid listeners
+		Thread thread = new Thread() {
+			public void run() {
+				for (MessageEventListener listener : eventListener) {
+					listener.messageRecieved(DefaultChatUser.this);
+				}
+			};
+		};
+		// fire and forget
+		thread.start();
 	}
 	
 	public Message read() {
@@ -190,6 +211,16 @@ public class DefaultChatUser implements ChatUser, Comparable<ChatUser> {
 	@Override
 	public void setProfile(Profile profile) {
 		this.profile = profile;
+	}
+	
+	@Override
+	public void addMessageEventListener(MessageEventListener listener) {
+		eventListener.add(listener);
+	}
+	
+	@Override
+	public void removeMessageEventListener(MessageEventListener listener) {
+		eventListener.remove(listener);
 	}
 	
 

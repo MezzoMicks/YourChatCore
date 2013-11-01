@@ -48,7 +48,7 @@ public class ResourceTranslatorService implements TranslatorService {
 		return instance;
 	}
 
-	private static List<String> parse(String input) {
+	public List<String> parse(String input) {
 		LinkedList<String> result = new LinkedList<String>();
 		String main = null;
 		StringTokenizer tokenizer = new StringTokenizer(input, "{");
@@ -77,9 +77,13 @@ public class ResourceTranslatorService implements TranslatorService {
 	 */
 	@Override
 	public String translate(String rawMessage, Locale locale) {
-		ResourceBundle messages = getResource(locale);
 		// parse the input
-		List<String> arguments = parse(rawMessage);
+		return translate(parse(rawMessage), locale);
+	}
+	
+	@Override
+	public String translate(List<String> arguments, Locale locale) {
+		ResourceBundle messages = getResource(locale);
 		// remove the first element (it's the message-id)
 		String messageID = arguments.remove(0);
 		String message = messages.getString(messageID.substring(1));
@@ -90,7 +94,7 @@ public class ResourceTranslatorService implements TranslatorService {
 		// let's restore NewLines, if some where in the Message-Pattern
 		output = StringEscapeUtils.unescapeJava(output);
 		if (logger.isDebugEnabled()) {
-			logger.debug("translated '" + rawMessage + "' to '" + output + "'");
+			logger.debug("translated '" + messageID + "' to '" + output + "'");
 		}
 		return output;
 	}

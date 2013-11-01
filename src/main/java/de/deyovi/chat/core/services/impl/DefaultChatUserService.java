@@ -286,14 +286,17 @@ public class DefaultChatUserService implements ChatUserService {
 	
 	private ChatUser convert(ChatUserEntity entity) {
 		// not logged in... then let's create the local user
-		ChatUser result = createLocalUser(entity.getId(), entity.getName());
-		result.getSettings().setColor(entity.getColor());
-		result.getSettings().setFont(entity.getFont());
-		result.getSettings().setFavouriteRoom(entity.getRoom());
-		result.getSettings().setTrusted(entity.isTrusted());
-		result.getSettings().setAsyncmode(entity.isAsyncmode());
-		result.setLastLogin(entity.getLastlogin());
-		result.setProfile(profileService.getProfile(result));
+		ChatUser result = names2users.get(entity.getName().toLowerCase());
+		if (result == null) {
+			result = createLocalUser(entity.getId(), entity.getName());
+			result.getSettings().setColor(entity.getColor());
+			result.getSettings().setFont(entity.getFont());
+			result.getSettings().setFavouriteRoom(entity.getRoom());
+			result.getSettings().setTrusted(entity.isTrusted());
+			result.getSettings().setAsyncmode(entity.isAsyncmode());
+			result.setLastLogin(entity.getLastlogin());
+			result.setProfile(profileService.getProfile(result));
+		}
 		return result;
 	}
 
