@@ -1,10 +1,13 @@
 package de.deyovi.chat.core.services.impl;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -21,21 +24,26 @@ public class JSONMessageConsumer implements MessageConsumer {
 	private final TranslatorService translatorService = ResourceTranslatorService.getInstance();
 	
 	private JSONObject json = null;
+    private List<JSONObject> jsonMessages = new LinkedList<JSONObject>();
 	
 	private boolean stop = false;
+    private boolean refresh = false;
 	
 	public void consume(Segment[] segments, Locale locale, OutputMeta meta) {
 		stop |= meta.isInterrupted();
+        refresh |= meta.isRefreshRequired();
 		try {
-			JSONObject message = null;;
+			JSONObject message = null;
+            List<JSONObject> jsonSegments = new ArrayList<JSONObject>(segments.length);
 			String profile = null;
 			for (Segment seg : segments) {
 				if (message == null) {
 					message = new JSONObject();
-					message.put("user", meta.getOrigin() != null ? meta.getOrigin().getId() : null);
+					message.put("user", meta.getOrigin() != null ? meta.getOrigin().getUserName() : null);
 				}
 				String content = seg.getContent();
 				JSONObject segment = new JSONObject();
+                jsonSegments.add(segment);
 				segment.put("type", seg.getType().toString());
 				if (seg.getType() == ContentType.TEXT) {
 					if (content.charAt(0) == '$') {
@@ -54,14 +62,11 @@ public class JSONMessageConsumer implements MessageConsumer {
 					segment.put("pinky", seg.getPinky());
 					segment.put("preview", seg.getPreview());
 				}
-				message.putOpt("segments", segment);
 			}
 			if (message != null) {
+                message.put("segments", jsonSegments);
 				message.put("open_profile", profile);
-				if (json == null) {
-					json = new JSONObject();
-				}
-				json.putOpt("messages", message);
+                jsonMessages.add(message);
 			}
 		} catch (JSONException e) {
 			logger.error(e);
@@ -71,8 +76,13 @@ public class JSONMessageConsumer implements MessageConsumer {
 	@Override
 	public void finish() {
 		try {
-			json.put("stop", stop);
-		} catch (JSONException e) {
+            if (json == null && (!jsonMessages.isEmpty() || stop || refresh)) {
+                json = new JSONObject();
+                json.put("stop", stop);
+                json.put("refresh", refresh);
+                json.put("messages", jsonMessages);
+            }
+        } catch (JSONException e) {
 			logger.error(e);
 		}
 	}

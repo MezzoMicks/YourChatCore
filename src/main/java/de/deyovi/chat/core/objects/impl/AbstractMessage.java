@@ -49,9 +49,12 @@ public abstract class AbstractMessage implements Message {
 		StringBuilder result = new StringBuilder();
 		result.append(getOrigin() != null ? getOrigin().getUserName() : "SYSTEM");
 		result.append("::");
-		for (Segment seg : getSegments()) {
-			result.append(seg.getContent());
-		}
+        final Segment[] segments = getSegments();
+        if (segments != null) {
+            for (Segment seg : segments) {
+                result.append(seg.getContent());
+            }
+        }
 		return result.toString();
 	}
 

@@ -10,7 +10,6 @@ import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.UnknownHostException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
@@ -19,6 +18,7 @@ import java.util.regex.Pattern;
 
 import javax.activation.MimetypesFileTypeMap;
 
+import de.deyovi.chat.core.services.CommandInterpreter;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -35,7 +35,6 @@ import de.deyovi.chat.core.objects.Segment.ContentType;
 import de.deyovi.chat.core.objects.impl.SystemMessage;
 import de.deyovi.chat.core.objects.impl.TextSegment;
 import de.deyovi.chat.core.objects.impl.ThumbnailedSegment;
-import de.deyovi.chat.core.services.CommandProcessorService;
 import de.deyovi.chat.core.services.FileStoreService;
 import de.deyovi.chat.core.services.InputProcessorService;
 import de.deyovi.chat.core.services.ThumbGeneratorService;
@@ -65,9 +64,8 @@ public class DefaultInputProcessorService implements InputProcessorService {
 				
 				Class<?> loadedClass = imageProcessorPlugin.getClass().getClassLoader().loadClass(pluginClass);
 				Constructor<?>[] constructors = loadedClass.getConstructors();
-				for (Constructor<?> constructor : constructors) {
-					plugin = (InputSegmentInterpreter) constructor.newInstance();
-					break;
+				if (constructors != null && constructors.length > 0) {
+					plugin = (InputSegmentInterpreter) constructors[0].newInstance();
 				}
 				logger.info("Adding Plugin: " + plugin.getClass().getName());
 				processorMap.put(i++, plugin);
@@ -97,7 +95,6 @@ public class DefaultInputProcessorService implements InputProcessorService {
 		// Hidden
 	}
 
-	private CommandProcessorService commandProcessorService = DefaultCommandProcessorService.getInstance();
 	private FileStoreService fileStoreService = DefaultFileStoreService.getInstance();
 	
 	@Override
@@ -132,7 +129,7 @@ public class DefaultInputProcessorService implements InputProcessorService {
 				}
 				logger.info("Command[" + cmdprefix + "] from user[" + user + "]");
 				// and process it
-				commandProcessorService.process(user, cmd, payload, uploadStream, uploadName);
+				new DefaultCommandInterpreter(this).process(user, cmd, payload, uploadStream, uploadName);
 			}
 			processed = true;
 		}

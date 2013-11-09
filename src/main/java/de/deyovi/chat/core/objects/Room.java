@@ -47,7 +47,7 @@ public interface Room {
 
 	void setAnonymous(boolean b);
 
-	void setMotd(ChatUser username, String motd, InputStream uploadStream, String uploadName) ;
+	void setMotd(ChatUser username, Segment[] segments) ;
 
 	RoomInfo getInfoForUser(ChatUser user);
 	

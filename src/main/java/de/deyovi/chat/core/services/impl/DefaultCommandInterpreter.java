@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 
+import de.deyovi.chat.core.services.CommandInterpreter;
 import org.apache.log4j.Logger;
 
 import de.deyovi.chat.core.constants.ChatConstants.ChatCommand;
@@ -17,32 +18,22 @@ import de.deyovi.chat.core.objects.Segment;
 import de.deyovi.chat.core.objects.impl.SystemMessage;
 import de.deyovi.chat.core.objects.impl.TextSegment;
 import de.deyovi.chat.core.services.ChatUserService;
-import de.deyovi.chat.core.services.CommandProcessorService;
 import de.deyovi.chat.core.services.InputProcessorService;
 import de.deyovi.chat.core.services.RoomService;
 import de.deyovi.chat.core.utils.ChatUtils;
 
-public class DefaultCommandProcessorService implements CommandProcessorService {
+public class DefaultCommandInterpreter implements CommandInterpreter {
 
-	private static final Logger logger = Logger.getLogger(DefaultCommandProcessorService.class);
+	private static final Logger logger = Logger.getLogger(DefaultCommandInterpreter.class);
 
-	private static final CommandProcessorService instance = new DefaultCommandProcessorService();
-	
 	private final RoomService roomService = DefaultRoomService.getInstance();
 	private final ChatUserService chatUserService = DefaultChatUserService.getInstance();
-	private final InputProcessorService inputProcessorService = DefaultInputProcessorService.getInstance();
+    private final InputProcessorService inputProcessorService;
 
-	private final SimpleDateFormat sdf_date = new SimpleDateFormat("dd.MM.yyyy");
-	private final SimpleDateFormat sdf_time =  new SimpleDateFormat("HH:mm");
-	
-	private DefaultCommandProcessorService() {
-		// hidden
-	}
+    public DefaultCommandInterpreter(InputProcessorService inputProcessorService) {
+        this.inputProcessorService = inputProcessorService;
+    }
 
-	public static CommandProcessorService getInstance() {
-		return instance;
-	}
-	
 	@Override
 	public boolean process(ChatUser user, ChatCommand cmd, String payload, InputStream uploadStream, String uploadName) {
 		switch (cmd) {
@@ -156,7 +147,6 @@ public class DefaultCommandProcessorService implements CommandProcessorService {
 				if (room.isVisible() || room.isInvited(user) || room.getOwner().equals(user)) {
 					room.join(user);
 					user.alive();
-					user.push(new SystemMessage(null, 0l, MessagePreset.SWITCH_CHANNEL, room.getName(), room.getColor()));
 					chatUserService.broadcast(new SystemMessage(null, 0l, MessagePreset.REFRESH));
 				} else {
 					user.push(new SystemMessage(null, 0l, MessagePreset.CHANNEL_NOTALLOWED, room.getName()));
@@ -234,7 +224,9 @@ public class DefaultCommandProcessorService implements CommandProcessorService {
 				logger.info("SEARCH with unknown user '" + wanted + "' supplied!");
 				user.push(new SystemMessage(null, 0l, MessagePreset.UNKNOWN_USER, wanted));
 			} else if (!chatUserService.isActive(wantedUser)) {
+                SimpleDateFormat sdf_date = new SimpleDateFormat("dd.MM.yyyy");
 				String date = sdf_date.format(wantedUser.getLastLogin());
+                SimpleDateFormat sdf_time =  new SimpleDateFormat("HH:mm");
 				String time = sdf_time.format(wantedUser.getLastLogin());
 				user.push(new SystemMessage(null, 0l, MessagePreset.SEARCH_LAST, wantedUser.getUserName(), date, time));
 			} else {
@@ -369,9 +361,10 @@ public class DefaultCommandProcessorService implements CommandProcessorService {
 				logger.debug(user + " sets motd for Room '" + userRoom + "' to '" + motd + "'");
 			}
 			if (!motd.isEmpty()) {
-				userRoom.setMotd(user, motd, uploadStream, uploadName);
+                Segment[] segments = inputProcessorService.process(user, motd, uploadStream, uploadName);
+                userRoom.setMotd(user, segments);
 			} else {
-				userRoom.setMotd(user, null, null, null);
+				userRoom.setMotd(user, null);
 			}
 			userRoom.shout(new SystemMessage(null, 0l, MessagePreset.MOTD_SET, user.getUserName()));
 		} else {
@@ -483,7 +476,7 @@ public class DefaultCommandProcessorService implements CommandProcessorService {
 				userRoom.setBgImage(null);
 			}
 			
-			userRoom.shout(new SystemMessage(user, 0, MessagePreset.CHANNEL_BG_CHANGED));
+			userRoom.shout(new SystemMessage(null, 0, MessagePreset.CHANNEL_BG_CHANGED, user));
 		}
 	}
 
@@ -492,7 +485,7 @@ public class DefaultCommandProcessorService implements CommandProcessorService {
 		userRoom = user.getCurrentRoom();
 		if (user.getSettings().isTrusted() || user.equals(userRoom.getOwner())) {
 			userRoom.setFontColor(fontColor);
-			userRoom.shout(new SystemMessage(user, 0, MessagePreset.CHANNEL_FG_CHANGED));
+			userRoom.shout(new SystemMessage(null, 0, MessagePreset.CHANNEL_FG_CHANGED, user));
 		}
 	}
 

@@ -59,15 +59,14 @@ public class DefaultChatUserService implements ChatUserService {
 			_instance = new DefaultChatUserService();
 		}
 	}
-	
-	private final Thread timeoutThread;
+
 	private final AtomicLong ids = new AtomicLong(System.currentTimeMillis());
 	private final ChatUserDAO chatUserDAO = DefaultChatUserDAO.getInstance();
 	private final EntityService entityService = DefaultEntityService.getInstance();
 	private final ProfileService profileService = DefaultProfileService.getInstance();
 	
 	private DefaultChatUserService() {
-		timeoutThread = new MyTimeoutThread();
+        Thread timeoutThread = new MyTimeoutThread();
 		timeoutThread.start();
 		defaultRoom = DefaultRoomService.getInstance().getDefault();
 	}
@@ -405,7 +404,7 @@ public class DefaultChatUserService implements ChatUserService {
 
 		/**
 		 * Returns the LocalUser-Object to this invitation
-		 * @return {@link LocalUser} if the user is present in chat
+		 * @return {@link ChatUser} if the user is present in chat
 		 */
 		public ChatUser getInvitee() {
 			return invitee;
@@ -421,7 +420,7 @@ public class DefaultChatUserService implements ChatUserService {
 
 		/**
 		 * The person who invoked the Invitation
-		 * @return {@link LocalUser}
+		 * @return {@link ChatUser}
 		 */
 		public ChatUser getInviter() {
 			return inviter;
@@ -459,7 +458,7 @@ public class DefaultChatUserService implements ChatUserService {
 		@Override
 		public void run() {
 			logger.info("Timeout-Thread is running");
-			while (true) {
+			while (!isInterrupted()) {
 				try {
 					Thread.sleep(MINUTE);
 					long timeoutAgo = System.currentTimeMillis() - TIMEOUT;
@@ -477,7 +476,7 @@ public class DefaultChatUserService implements ChatUserService {
 							if (timeout) {
 								logger.info("Timeout for User " + user);
 								user.push(new SystemMessage(null, 0l, MessagePreset.TIMEOUT));
-								Thread.sleep(5000); // Timing-Problem, want to make sure the Listenerthread will fetch the Message
+								Thread.sleep(5000); // Timing-Problem, want to make sure the Client will fetch the Message
 								DefaultChatUserService._logout(user);
 							}
 						} else {

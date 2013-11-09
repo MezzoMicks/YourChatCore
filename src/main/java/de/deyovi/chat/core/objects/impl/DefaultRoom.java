@@ -1,29 +1,18 @@
 package de.deyovi.chat.core.objects.impl;
 
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.log4j.Logger;
-
 import de.deyovi.chat.core.constants.ChatConstants.MessagePreset;
 import de.deyovi.chat.core.objects.ChatUser;
 import de.deyovi.chat.core.objects.Message;
 import de.deyovi.chat.core.objects.Room;
 import de.deyovi.chat.core.objects.Segment;
 import de.deyovi.chat.core.objects.Segment.ContentType;
-import de.deyovi.chat.core.services.InputProcessorService;
-import de.deyovi.chat.core.services.impl.DefaultInputProcessorService;
 import de.deyovi.chat.core.services.impl.DefaultRoomService;
+import org.apache.log4j.Logger;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class DefaultRoom implements Room {
 
@@ -36,7 +25,7 @@ public class DefaultRoom implements Room {
 	private final Set<String> invitations = new HashSet<String>();
 	private final Set<String> bans = new HashSet<String>();
 	private final List<Message> protocol = new LinkedList<Message>();
-	private final DefaultSegment protokollSegment;
+	private final DefaultSegment protocolSegment;
 	private String bgImage = null;
 	private boolean open = false;
 	private boolean anonymous = false;
@@ -45,8 +34,6 @@ public class DefaultRoom implements Room {
 	private String fgColor = "000000";
 	private ChatUser owner;
 	private Message motd = null;
-
-	private InputProcessorService inputProcessorService = DefaultInputProcessorService.getInstance();
 	
 	public DefaultRoom(String name, boolean individual) {
 		this.name = name;
@@ -58,10 +45,10 @@ public class DefaultRoom implements Room {
 				escapedName = name;
 				logger.error(e);
 			}
-			protokollSegment = new DefaultSegment(name, "data?protocol=" + escapedName, ContentType.PROTOCOL, null, null, null);
-			protokollSegment.setAlternateName("$PROTOCOL{room=" + name + "}");
+			protocolSegment = new DefaultSegment(name, "data?protocol=" + escapedName, ContentType.PROTOCOL, null, null, null);
+			protocolSegment.setAlternateName("$PROTOCOL{room=" + name + "}");
 		} else {
-			protokollSegment = null;
+			protocolSegment = null;
 		}
 		ids = new AtomicLong();
 	}
@@ -164,7 +151,7 @@ public class DefaultRoom implements Room {
 	@Override
 	public void join(ChatUser user) {
 		Room oldRoom = user.getCurrentRoom();
-		broadcast(new SystemMessage(user, nextId(), MessagePreset.JOIN_CHANNEL, user.getUserName()));
+		broadcast(new SystemMessage(null, nextId(), MessagePreset.JOIN_CHANNEL, user.getUserName()));
 		// if this isn't the users previous room
 		if (oldRoom != this) {
 			// leave it
@@ -174,7 +161,7 @@ public class DefaultRoom implements Room {
 			// and set this as his room
 			user.setCurrentRoom(this);
 			users.add(user);
-			user.push(new SystemMessage(user, nextId(), MessagePreset.SWITCH_CHANNEL, getName(), getColor()));
+			user.push(new SystemMessage(null, nextId(), MessagePreset.SWITCH_CHANNEL, getName(), getColor()));
 			if (motd != null) {
 				user.push(motd);
 			}
@@ -210,12 +197,12 @@ public class DefaultRoom implements Room {
 					usersArray[i++] = tmp;
 				}
 			} else {
-				usersArray = new ChatUser[0];;
+				usersArray = new ChatUser[0];
 			}
-			if (member && protokollSegment != null) {
+			if (member && protocolSegment != null) {
 				mediaArray = new DefaultSegment[media.size() + 1];
 				int i = 0;
-				mediaArray[i++] = protokollSegment;
+				mediaArray[i++] = protocolSegment;
 				for (Segment e : media) {
 					mediaArray[i++] = e;
 				}
@@ -227,8 +214,8 @@ public class DefaultRoom implements Room {
 			bgColor = null;
 			fgColor = null;
 			bgImage = null;
-			usersArray = new ChatUser[0];;
-			mediaArray = new Segment[0];;
+			usersArray = new ChatUser[0];
+			mediaArray = new Segment[0];
 		}
 		return new MyRoomInfo(name, bgColor, fgColor,bgImage, usersArray, mediaArray);
 	}
@@ -292,11 +279,10 @@ public class DefaultRoom implements Room {
 	}
 
 	@Override 
-	public void setMotd(ChatUser user, String motd, InputStream uploadStream, String uploadName) {
-		if (motd == null) {
+	public void setMotd(ChatUser user, Segment[] segments) {
+		if (segments == null) {
 			this.motd = null;
 		} else {
-			Segment[] segments = inputProcessorService.process(user, motd, uploadStream, uploadName);
 			segments = Arrays.copyOf(segments, segments.length + 1);
 			segments[segments.length - 1] =  new TextSegment(user != null ? user.getUserName() : "$system", "\n");
 			SystemMessage motdMessage = new SystemMessage(null, 0, MessagePreset.MOTD);
@@ -307,7 +293,7 @@ public class DefaultRoom implements Room {
 	
 	@Override
 	public List<Message> getProtocol() {
-		if (protokollSegment != null) {
+		if (protocolSegment != null) {
 			return protocol;
 		} else {
 			return null;
@@ -318,7 +304,7 @@ public class DefaultRoom implements Room {
 		for (ChatUser listener : getUsers()) {
 			listener.push(msg);
 		}
-		if (protokollSegment != null) {
+		if (protocolSegment != null) {
 			protocol.add(msg);
 		}
 	}

@@ -45,7 +45,7 @@ import javax.persistence.Table;
 		+ "FROM PrivateMessageEntity m " //
 		+ "WHERE m.recipient = :user " //
 		+ "AND m.read = FALSE " //
-	),
+	)
 })
 public class PrivateMessageEntity {
 

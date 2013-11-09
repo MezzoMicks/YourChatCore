@@ -81,7 +81,7 @@ public class HTMLMessageConsumer implements MessageConsumer {
 	private String decorateLink(Segment seg) {
 		String content;
 		String text = seg.getAlternateName() != null ? seg.getAlternateName() : seg.getContent();
-		text =  ChatUtils.escape(text);;
+		text =  ChatUtils.escape(text);
 		String typeClass = "icon-";
 		switch (seg.getType()) {
 		case IMAGE:
@@ -131,7 +131,7 @@ public class HTMLMessageConsumer implements MessageConsumer {
 				} else {
 					name = String.format(USER_TAG, color, name);
 				}
-					target.append(name);
+				target.append(name);
 				target.append(':');
 			}
 			
@@ -149,11 +149,12 @@ public class HTMLMessageConsumer implements MessageConsumer {
 					}
 					content = decorateText(content);
 				} else {
-					refresh |= true;
 					content = decorateLink(seg);
 				}
-				target.append(content);
-				target.append(' ');
+                if (content != null) {
+                    target.append(content);
+                    target.append(' ');
+                }
 			}
 		
 			target.append("</p>\n");

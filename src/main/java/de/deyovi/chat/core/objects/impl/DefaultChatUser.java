@@ -152,7 +152,7 @@ public class DefaultChatUser implements ChatUser, Comparable<ChatUser> {
 				for (MessageEventListener listener : eventListener) {
 					listener.messageRecieved(DefaultChatUser.this);
 				}
-			};
+			}
 		};
 		// fire and forget
 		thread.start();

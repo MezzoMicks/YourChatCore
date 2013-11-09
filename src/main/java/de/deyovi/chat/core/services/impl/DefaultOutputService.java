@@ -71,6 +71,7 @@ public class DefaultOutputService  implements OutputService {
 					consumer.consume(segments, locale, meta);
 				}
 			}
+            consumer.finish();
 		}
 		return meta;
 	}
@@ -107,9 +108,7 @@ public class DefaultOutputService  implements OutputService {
 				if (name == null) {
 					name = media.getContent();
 				} else {
-					if (name.charAt(0) == '$') {
-						name = translatorService.translate(name.substring(1), locale);
-					}
+					name = translatorService.translate(name, locale);
 					name = ChatUtils.escape(name);
 				}
 				jsonMedia.put("name", name);

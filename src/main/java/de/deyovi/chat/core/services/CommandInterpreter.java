@@ -5,7 +5,7 @@ import java.io.InputStream;
 import de.deyovi.chat.core.constants.ChatConstants.ChatCommand;
 import de.deyovi.chat.core.objects.ChatUser;
 
-public interface CommandProcessorService {
+public interface CommandInterpreter {
 
 	/**
 	 * Processes a Users Input, looking for commands

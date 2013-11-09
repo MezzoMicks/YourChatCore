@@ -69,9 +69,6 @@ public class DefaultRoomService implements RoomService {
 			if (defaultRoom == null) {
 				defaultRoom = room;
 			}
-			if (motd4room != null) {
-				room.setMotd(null, motd4room, null, null);
-			}
 		}
 		this.defaultRoom = defaultRoom;
 	}

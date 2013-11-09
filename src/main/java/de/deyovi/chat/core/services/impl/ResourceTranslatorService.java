@@ -89,7 +89,7 @@ public class ResourceTranslatorService implements TranslatorService {
 		String message = messages.getString(messageID.substring(1));
 		// create a formatter with our message
 		MessageFormat formatter = new MessageFormat(message, messages.getLocale());
-		// and pass our arguments to the function
+		// and pass the remaining arguments to the function
 		String output = formatter.format(arguments.toArray());
 		// let's restore NewLines, if some where in the Message-Pattern
 		output = StringEscapeUtils.unescapeJava(output);
