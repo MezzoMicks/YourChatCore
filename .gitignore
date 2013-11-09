@@ -1,3 +1,5 @@
 /.settings
 /target
 /build
+
+tools/*.exe
