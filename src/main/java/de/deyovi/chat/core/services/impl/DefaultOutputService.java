@@ -76,14 +76,6 @@ public class DefaultOutputService  implements OutputService {
 		return meta;
 	}
 	
-	
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.deyovi.chat.facades.impl.OutputFacade#refresh(de.deyovi.chat.core.
-	 * objects.ChatUser, java.util.Locale)
-	 */
 	@Override
 	public JSONObject getRefreshData(ChatUser user, Locale locale) {
 		JSONObject result = new JSONObject();

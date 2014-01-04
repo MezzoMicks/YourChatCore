@@ -5,11 +5,8 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.MissingResourceException;
-import java.util.Properties;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
-
-import javax.ejb.embeddable.EJBContainer;
 
 import org.apache.log4j.Logger;
 
@@ -40,6 +37,7 @@ public class ChatConfiguration {
 	private Integer uploadRequest = null;
 	private List<String> extraPlugins = new LinkedList<String>();
 	private String urlPrefix = null;
+	private boolean initmode = false;
 
 	public ChatConfiguration() {
 		try {
@@ -105,6 +103,10 @@ public class ChatConfiguration {
 
 	public static String getUrlPrefix() {
 		return instance.urlPrefix;
+	}
+	
+	public static boolean isInitMode() {
+		return instance.initmode;
 	}
 	
 	public static File createTempDirectory(File parent) throws IOException {
@@ -203,6 +205,8 @@ public class ChatConfiguration {
 		if (urlPrefix == null) {
 			urlPrefix = "";
 		}
+
+		invitationRequired = Boolean.parseBoolean(readResource(bundle, ChatConstants.PROPERTY_INITMODE));
 		
 		String pluginString = readResource(bundle, ChatConstants.PROPERTY_PLUGINS);
 		if (pluginString != null && !(pluginString = pluginString.trim()).isEmpty()) {

@@ -1,5 +1,8 @@
 package de.deyovi.chat.core.dao.impl;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
@@ -37,7 +40,7 @@ public class DefaultChatUserDAO implements ChatUserDAO {
 		// Query the db for that user
 		logger.debug("Fetching UserEntity by name " + username);
 		EntityManager entityManager = entityService.getFactory().createEntityManager();
-		TypedQuery<ChatUserEntity> query = entityManager.createNamedQuery("getUserByName", ChatUserEntity.class);
+		TypedQuery<ChatUserEntity> query = entityManager.createNamedQuery("findUserByName", ChatUserEntity.class);
 		query.setParameter("name", username.toLowerCase());
 		ChatUserEntity userEntity = null;
 		try {
@@ -63,6 +66,22 @@ public class DefaultChatUserDAO implements ChatUserDAO {
 		}
 		entityManager.close();
 		return userEntity;
+	}
+	
+	@Override
+	public List<ChatUserEntity> findAll() {
+		logger.debug("Fetching all ChatUsers");
+		EntityManager entityManager = entityService.getFactory().createEntityManager();
+		List<ChatUserEntity> userEntities = new LinkedList<ChatUserEntity>();
+		try {
+			TypedQuery<ChatUserEntity> query = entityManager.createNamedQuery("findAll", ChatUserEntity.class);
+			userEntities = query.getResultList();
+			logger.debug("Found " + userEntities.size() + " Users");
+		} catch (NoResultException nrex) {
+			logger.debug("No Users found in Database");
+		}
+		entityManager.close();
+		return userEntities;
 	}
 	
 	

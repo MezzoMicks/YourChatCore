@@ -22,16 +22,20 @@ import javax.persistence.Table;
 @Entity
 @Table(name="chatuser")
 @NamedQueries({
-	@NamedQuery(name="getUserByName", 
+	@NamedQuery(name="findUserByName", 
 				query="SELECT u " //
 					+ "FROM ChatUserEntity u " //
 					+ "WHERE LOWER(u.name) = :name"//
 				),
 	@NamedQuery(name="findUserNamesByName", 
-	query="SELECT u.name " //
-		+ "FROM ChatUserEntity u " //
-		+ "WHERE LOWER(u.name) like :name"//
-	)
+				query="SELECT u " //
+					+ "FROM ChatUserEntity u " //
+					+ "WHERE LOWER(u.name) like :name"//
+				),
+	@NamedQuery(name="findAll", 
+				query="SELECT u " //
+					+ "FROM ChatUserEntity u " //
+				)
 })
 public class ChatUserEntity implements Serializable {
 
@@ -41,7 +45,7 @@ public class ChatUserEntity implements Serializable {
 	@GeneratedValue( strategy = GenerationType.IDENTITY )
 	private long id;
 	@Basic
-	@Column(length=20)
+	@Column(length=24)
 	private String name;
 	@Basic
 	@Column(length=64)
@@ -63,6 +67,8 @@ public class ChatUserEntity implements Serializable {
 	private ProfileEntity profile;
 	@Basic
 	private boolean asyncmode;
+
+	private Timestamp entryDate;
 	public ChatUserEntity() {
 		super();
 	}   
@@ -127,6 +133,12 @@ public class ChatUserEntity implements Serializable {
 	}
 	public void setAsyncmode(boolean asyncmode) {
 		this.asyncmode = asyncmode;
+	}
+	public Timestamp getEntryDate() {
+		return entryDate;
+	}
+	public void setEntryDate(Timestamp entryDate) {
+		this.entryDate = entryDate;
 	}
    
 }

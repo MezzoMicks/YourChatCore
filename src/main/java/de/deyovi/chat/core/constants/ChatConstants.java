@@ -160,6 +160,7 @@ public class ChatConstants {
 	public final static String PROPERTY_INVITATION_REQUIRED = "de.deyovi.chat.invitation.required";
 	public final static String PROPERTY_URL_PREFIX = "de.deyovi.chat.url.prefix";
 	public final static String PROPERTY_PLUGINS = "de.deyovi.chat.plugins";
+	public final static String PROPERTY_INITMODE = "de.deyovi.chat.initmode";
 	
 	public enum ImageSize {
 		ORIGINAL("", -1), PREVIEW("preview_", 280), THUMBNAIL("thumb_", 160), PINKY("pinky_", 64),;

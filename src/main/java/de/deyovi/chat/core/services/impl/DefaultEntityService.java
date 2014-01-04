@@ -1,5 +1,7 @@
 package de.deyovi.chat.core.services.impl;
 
+import java.util.List;
+
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
@@ -9,7 +11,13 @@ import javax.transaction.UserTransaction;
 
 import org.apache.log4j.Logger;
 
+import de.deyovi.chat.core.dao.ChatUserDAO;
+import de.deyovi.chat.core.dao.impl.DefaultChatUserDAO;
+import de.deyovi.chat.core.entities.ChatUserEntity;
 import de.deyovi.chat.core.services.EntityService;
+import de.deyovi.chat.core.utils.ChatConfiguration;
+import de.deyovi.chat.core.utils.ChatUtils;
+import de.deyovi.chat.core.utils.PasswordUtil;
 
 public class DefaultEntityService implements EntityService {
 
@@ -102,13 +110,66 @@ public class DefaultEntityService implements EntityService {
 		}
 	}
 
-	private static UserTransaction createTransaction() throws NamingException {
+    @Override
+    public void initialize(String username, String password) {
+    	boolean allow;
+    	logger.info("Initialization request with AdminUser:" + username);
+    	if (isInitialized()) {
+    		if (ChatConfiguration.isInitMode()) {
+	    		allow = true;
+		    	logger.warn("Allowing, on already initialized System (initmode)");
+	    	} else {
+	    		allow = false;
+		    	logger.warn("Denying, becuase system already initialized");
+	    	}
+    	} else {
+    		logger.info("Allowing, system not initialized");
+    		allow = true;
+    	}
+    	
+    	if (!isInitialized()) {
+	    	logger.info("Creating AdminUser " + username);
+	    	ChatUserDAO chatUserDao = DefaultChatUserDAO.getInstance();
+	    	ChatUserEntity newUser = chatUserDao.findChatUserByName(username);
+	    	if (newUser == null) {
+	    		newUser = new ChatUserEntity();
+				newUser.setName(username);
+	    	}
+			newUser.setPassword(PasswordUtil.encrypt(username, null));
+			newUser.setTrusted(true);
+			persistOrMerge(newUser, true);
+    	}
+    }
+
+    @Override
+    public boolean isInitialized() {
+    	ChatUserDAO chatUser = DefaultChatUserDAO.getInstance();
+    	// the system is not initialized if
+    	List<ChatUserEntity> users = chatUser.findAll();
+    	if (users.isEmpty()) {
+    		// there are no users
+    		return false;
+    	} else {
+    		// or nobody is trusted
+    		boolean oneIsTrusted = false;
+    		logger.info(users);
+    		for (ChatUserEntity user : users) {
+    			if ((oneIsTrusted = user.isTrusted())) {
+    				break;
+    			}
+    		}
+    		return oneIsTrusted;
+    	}
+    }
+
+    private static UserTransaction createTransaction() throws NamingException {
 		return (UserTransaction) new InitialContext().lookup("java:comp/UserTransaction");
 	}
 	
 	
 	private synchronized void createFactory() {
 		if (emf == null) {
+			System.setProperty("javax.persistence.jdbc.driver", "org.hsql.jdbcDriver");
 			emf = Persistence.createEntityManagerFactory("YourChatWeb");
 		}
 	}
