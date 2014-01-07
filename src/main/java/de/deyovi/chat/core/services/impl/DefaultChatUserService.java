@@ -1,5 +1,6 @@
 package de.deyovi.chat.core.services.impl;
 
+import java.lang.reflect.Array;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,6 +12,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.log4j.Logger;
 
 import de.deyovi.chat.core.constants.ChatConstants.MessagePreset;
@@ -29,6 +31,11 @@ import de.deyovi.chat.core.services.ProfileService;
 import de.deyovi.chat.core.utils.ChatConfiguration;
 import de.deyovi.chat.core.utils.PasswordUtil;
 
+/**
+ * Default Implementation for ChatUserService
+ * @author Michi
+ *
+ */
 public class DefaultChatUserService implements ChatUserService {
 
 	private final static Logger logger = Logger.getLogger(DefaultChatUserService.class);

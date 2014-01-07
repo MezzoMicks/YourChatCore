@@ -30,5 +30,10 @@ public interface ChatUserDAO {
 	 * @return {@link List} of {@link ChatUserEntity} (at least empty)
 	 */
 	public List<ChatUserEntity> findAll();
+
+	/**
+	 * Deletes all persisted ChatUsers
+	 */
+	public void deleteAll();
 	
 }
