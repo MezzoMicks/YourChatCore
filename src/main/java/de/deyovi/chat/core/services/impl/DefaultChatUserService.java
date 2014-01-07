@@ -290,6 +290,11 @@ public class DefaultChatUserService implements ChatUserService {
 		return key;
 	}
 	
+	public void changePassword(ChatUser user, String passwordHash) {
+		ChatUserEntity userEntity = chatUserDAO.findChatUserById(user.getId());
+		userEntity.setPassword(passwordHash);
+	}
+	
 	private ChatUser convert(ChatUserEntity entity) {
 		// not logged in... then let's create the local user
 		ChatUser result = names2users.get(entity.getName().toLowerCase());

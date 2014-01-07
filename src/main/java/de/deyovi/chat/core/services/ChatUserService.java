@@ -66,4 +66,6 @@ public interface ChatUserService {
      */
 	public List<ChatUser> getLoggedInUsers();
 	
+	public void changePassword(ChatUser user, String passwordHash);
+	
 }
