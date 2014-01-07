@@ -49,19 +49,14 @@ public class DefaultSessionFacade implements SessionFacade {
 	
 	@Override
 	public ChatUser register(String username, String password, String inviteKey, String sugar) {
-		ChatUser newUser;
-		logger.debug("login -> user:" + username + " pass: " + password + " sugar: " + sugar);
-		sugar = sugarCheck(username, sugar);
-		if (sugar != null) {
-			newUser = chatUserService.register(username, password, inviteKey, sugar);
-		} else {
-			newUser = null;
-		}
+		logger.debug("register -> user:" + username + " pass: " + password + " sugar: " + sugar);
+		ChatUser newUser = chatUserService.register(username, password, inviteKey, sugar);
 		return newUser;
 	}
 	
 	@Override
 	public void logout(ChatUser user) {
+		logger.info(user + " logged out");
 		chatUserService.logout(user);
 	}
 	
@@ -71,7 +66,7 @@ public class DefaultSessionFacade implements SessionFacade {
 	}
 	
 	private String sugarCheck(String username, String sugar) {
-		if (sugar.endsWith(username)) {
+		if (sugar != null && sugar.endsWith(username)) {
 			return sugar.substring(0, sugar.length() - username.length());
 		} else {
 			logger.error("Sugar didn't match user: got username '" + username + "' expected sugar '" + sugar + "'. Mixed up sessions?");
