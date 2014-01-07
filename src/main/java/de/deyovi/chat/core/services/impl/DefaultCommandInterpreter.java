@@ -466,7 +466,7 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 					}
 					ChatUtils.makeImageMoreTransparent(uploadStream, bos, backdrop);
 					ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
-					String bgImage = "data/" + ChatUtils.createAndStoreResized("bg_", bis, uploadName, 1240, (resize ? 1024 : -1), backdrop);
+					String bgImage = "u/" + ChatUtils.createAndStoreResized("bg_", bis, uploadName, 1240, (resize ? 1024 : -1), backdrop);
 					userRoom.setBgImage(bgImage);
 				} catch (Exception e) {
 					logger.error("Error, processing background for user " + user + " file: " + uploadName, e);

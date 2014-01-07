@@ -237,7 +237,7 @@ public class DefaultInputProcessorService implements InputProcessorService {
 					// Create Thumbnail
 					thumbGeneratorService = new ImageThumbGeneratorService();
 				}
-				result = new ThumbnailedSegment(username, uploadname, "data/" + filename, type, bis, thumbGeneratorService);
+				result = new ThumbnailedSegment(username, uploadname, "u/" + filename, type, bis, thumbGeneratorService);
 				bis.close();
 				uploadStream.close();
 			} catch (IOException e) {

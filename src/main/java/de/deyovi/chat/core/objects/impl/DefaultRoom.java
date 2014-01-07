@@ -332,7 +332,7 @@ public class DefaultRoom implements Room {
 			this.fgColor = fgColor;
 			this.users = users;
 			this.media = media;
-			this.bgImage = bgImage != null ? "data/" + bgImage : null;
+			this.bgImage = bgImage != null ? bgImage : null;
 		}
 		
 
