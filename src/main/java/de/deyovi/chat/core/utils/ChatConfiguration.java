@@ -206,7 +206,7 @@ public class ChatConfiguration {
 			urlPrefix = "";
 		}
 
-		invitationRequired = Boolean.parseBoolean(readResource(bundle, ChatConstants.PROPERTY_INITMODE));
+		initmode = Boolean.parseBoolean(readResource(bundle, ChatConstants.PROPERTY_INITMODE));
 		
 		String pluginString = readResource(bundle, ChatConstants.PROPERTY_PLUGINS);
 		if (pluginString != null && !(pluginString = pluginString.trim()).isEmpty()) {
