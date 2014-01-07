@@ -25,6 +25,7 @@ public class DefaultEntityService implements EntityService {
 
 	private volatile static EntityService _instance = null;
 	private volatile EntityManagerFactory emf = null;
+	private volatile Boolean initialized = null;
 
 	// = Persistence.createEntityManagerFactory("YourChatWeb")
 
@@ -101,6 +102,7 @@ public class DefaultEntityService implements EntityService {
 			transaction.begin();
 			em.joinTransaction();
 			logger.debug("removing entity " + entity);
+			em.merge(entity);
 			em.remove(entity);
 			transaction.commit();
 		} catch (Exception e) {
@@ -127,15 +129,13 @@ public class DefaultEntityService implements EntityService {
     		allow = true;
     	}
     	
-    	if (!isInitialized()) {
+    	if (allow) {
 	    	logger.info("Creating AdminUser " + username);
 	    	ChatUserDAO chatUserDao = DefaultChatUserDAO.getInstance();
-	    	ChatUserEntity newUser = chatUserDao.findChatUserByName(username);
-	    	if (newUser == null) {
-	    		newUser = new ChatUserEntity();
-				newUser.setName(username);
-	    	}
-			newUser.setPassword(PasswordUtil.encrypt(username, null));
+	    	chatUserDao.deleteAll();
+	    	ChatUserEntity newUser = new ChatUserEntity();
+	    	newUser.setName(username);
+			newUser.setPassword(PasswordUtil.encrypt(username, ""));
 			newUser.setTrusted(true);
 			persistOrMerge(newUser, true);
     	}
@@ -143,26 +143,29 @@ public class DefaultEntityService implements EntityService {
 
     @Override
     public boolean isInitialized() {
-    	ChatUserDAO chatUser = DefaultChatUserDAO.getInstance();
-    	// the system is not initialized if
-    	List<ChatUserEntity> users = chatUser.findAll();
-    	if (users.isEmpty()) {
-    		// there are no users
-    		return false;
-    	} else {
-    		// or nobody is trusted
-    		boolean oneIsTrusted = false;
-    		logger.info(users);
-    		for (ChatUserEntity user : users) {
-    			if ((oneIsTrusted = user.isTrusted())) {
-    				break;
-    			}
-    		}
-    		return oneIsTrusted;
+    	if (initialized == null) {
+	    	ChatUserDAO chatUser = DefaultChatUserDAO.getInstance();
+	    	// the system is not initialized if
+	    	List<ChatUserEntity> users = chatUser.findAll();
+	    	if (users.isEmpty()) {
+	    		// there are no users
+	    		initialized = false;
+	    	} else {
+	    		// or nobody is trusted
+	    		boolean oneIsTrusted = false;
+	//    		logger.info(users);
+	    		for (ChatUserEntity user : users) {
+	    			if ((oneIsTrusted = user.isTrusted())) {
+	    				break;
+	    			}
+	    		}
+	    		initialized = oneIsTrusted;
+	    	}
     	}
+    	return initialized;
     }
 
-    private static UserTransaction createTransaction() throws NamingException {
+    public static UserTransaction createTransaction() throws NamingException {
 		return (UserTransaction) new InitialContext().lookup("java:comp/UserTransaction");
 	}
 	
