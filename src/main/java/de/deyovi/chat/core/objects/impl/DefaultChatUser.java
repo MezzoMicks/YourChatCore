@@ -1,32 +1,32 @@
 package de.deyovi.chat.core.objects.impl;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import de.deyovi.chat.core.objects.Alert;
 import de.deyovi.chat.core.objects.ChatUser;
 import de.deyovi.chat.core.objects.ChatUserSettings;
 import de.deyovi.chat.core.objects.Message;
 import de.deyovi.chat.core.objects.MessageEventListener;
 import de.deyovi.chat.core.objects.Profile;
 import de.deyovi.chat.core.objects.Room;
+import de.deyovi.chat.core.objects.Alert.Lifespan;
 
 public class DefaultChatUser implements ChatUser, Comparable<ChatUser> {
 
 	private final static Logger logger = LogManager.getLogger(DefaultChatUser.class);
 	
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1974470192942471638L;
-	
-
 	private final static int MAX_QUEUE_SIZE = 1000;
 
 	private final AtomicLong messageIds = new AtomicLong(0l);
@@ -36,6 +36,7 @@ public class DefaultChatUser implements ChatUser, Comparable<ChatUser> {
 	private final String sessionId;
 	private final boolean guest;
 	private final transient Queue<Message> queue = new ConcurrentLinkedQueue<Message>();
+	private final Set<Alert> alerts = new TreeSet<Alert>();
 	private final List<MessageEventListener> eventListener = new LinkedList<MessageEventListener>();
 	private transient Room currentRoom = null;
 	private String listenId = "";
@@ -223,6 +224,26 @@ public class DefaultChatUser implements ChatUser, Comparable<ChatUser> {
 		eventListener.remove(listener);
 	}
 	
+	@Override
+	public Collection<Alert> getAlerts() {
+		List<Alert> result = new ArrayList<Alert>(alerts);
+		for (Alert alert : result) {
+			if (alert.getLifespan() != Lifespan.PERMANENT) {
+				alerts.remove(alert);
+			}
+		}
+		return result;
+	}
+	
+	@Override
+	public void addAlert(Alert alert) {
+		alerts.add(alert);
+	}
+	
+	@Override
+	public void removeAlert(Alert alert) {
+		alerts.remove(alert);
+	}
 
 	/**
 	 * Private Implementation of a Message which can be supplied with an id and may acts duplicate of the original message
@@ -231,10 +252,6 @@ public class DefaultChatUser implements ChatUser, Comparable<ChatUser> {
 	 */
 	private class UserMessage extends AbstractMessage {
 
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 3182373724141502691L;
 		private final Message original;
 		private final long id;
 		

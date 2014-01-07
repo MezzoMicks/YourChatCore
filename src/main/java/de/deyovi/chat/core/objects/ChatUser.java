@@ -1,5 +1,6 @@
 package de.deyovi.chat.core.objects;
 
+import java.util.Collection;
 import java.util.Date;
 
 
@@ -119,5 +120,23 @@ public interface ChatUser {
 	 * @param listener
 	 */
 	public void removeMessageEventListener(MessageEventListener listener);
+	
+	/**
+	 * With this new Alerts can be added to the users Alert-Stack
+	 * @param alert
+	 */
+	public void addAlert(Alert alert);
+	
+	/**
+	 * Permanent Alerts may be removed using this method
+	 * @param alert
+	 */
+	public void removeAlert(Alert alert);
+	
+	/**
+	 * Retrieves available Alerts for this User<br>
+	 * Alerts should be removed from Stack by this method (except for permanent Alerts)
+	 */
+	public Collection<Alert> getAlerts();
 	
 }
