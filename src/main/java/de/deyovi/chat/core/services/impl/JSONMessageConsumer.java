@@ -74,7 +74,9 @@ public class JSONMessageConsumer implements MessageConsumer {
 	}
 	
 	@Override
-	public void finish() {
+	public void finish(OutputMeta meta) {
+		refresh |= meta.isRefreshRequired();
+		stop |= meta.isInterrupted();
 		try {
             if (json == null && (!jsonMessages.isEmpty() || stop || refresh)) {
                 json = new JSONObject();

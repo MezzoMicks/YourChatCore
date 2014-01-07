@@ -71,8 +71,8 @@ public class DefaultOutputService  implements OutputService {
 					consumer.consume(segments, locale, meta);
 				}
 			}
-            consumer.finish();
 		}
+		consumer.finish(meta);
 		return meta;
 	}
 	

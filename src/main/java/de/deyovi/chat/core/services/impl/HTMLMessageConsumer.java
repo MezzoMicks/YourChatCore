@@ -169,7 +169,9 @@ public class HTMLMessageConsumer implements MessageConsumer {
 	}
 	
 	@Override
-	public void finish() {
+	public void finish(OutputMeta meta) {
+		refresh |= meta.isRefreshRequired();
+		stop |= meta.isInterrupted();
 		try {
 			if (refresh) {
 				target.append(REFRESH_SCRIPT);

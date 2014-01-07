@@ -9,7 +9,7 @@ public interface MessageConsumer {
 	
 	public void consume(Segment[] segments, Locale locale, OutputMeta meta);
 
-	public void finish();
+	public void finish(OutputMeta meta);
 	
 	public String getResult();
 	
