@@ -35,6 +35,10 @@ import javax.persistence.Table;
 	@NamedQuery(name="findAll", 
 				query="SELECT u " //
 					+ "FROM ChatUserEntity u " //
+				),
+	@NamedQuery(name="deleteAll", 
+				query="DELETE " //
+					+ "FROM ChatUserEntity u " //
 				)
 })
 public class ChatUserEntity implements Serializable {
@@ -63,7 +67,7 @@ public class ChatUserEntity implements Serializable {
 	private String room;
 	@Basic
 	private Timestamp lastlogin;
-	@OneToOne(fetch = FetchType.LAZY)
+	@OneToOne(fetch = FetchType.LAZY, orphanRemoval = true)
 	private ProfileEntity profile;
 	@Basic
 	private boolean asyncmode;

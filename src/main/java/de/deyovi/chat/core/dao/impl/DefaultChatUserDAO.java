@@ -6,6 +6,7 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
+import javax.transaction.UserTransaction;
 
 import org.apache.log4j.Logger;
 
@@ -72,18 +73,43 @@ public class DefaultChatUserDAO implements ChatUserDAO {
 	public List<ChatUserEntity> findAll() {
 		logger.debug("Fetching all ChatUsers");
 		EntityManager entityManager = entityService.getFactory().createEntityManager();
+		List<ChatUserEntity> userEntities = findAllWithEntityManager(entityManager);
+		entityManager.close();
+		return userEntities;
+	}
+	
+	@Override
+	public void deleteAll() {
+		logger.debug("Fetching all ChatUsers");
+		EntityManager entityManager = entityService.getFactory().createEntityManager();
+		try {
+			UserTransaction transaction = DefaultEntityService.createTransaction();
+			transaction.begin();
+			entityManager.joinTransaction();
+			List<ChatUserEntity> userEntities = findAllWithEntityManager(entityManager);
+			for (ChatUserEntity entity : userEntities) {
+				entityManager.remove(entity);
+			}
+			transaction.commit();
+		} catch (Exception e) {
+			logger.error(e);
+		} finally {
+			entityManager.close();
+		}
+	}
+	
+	
+	private List<ChatUserEntity> findAllWithEntityManager(EntityManager em) {
 		List<ChatUserEntity> userEntities = new LinkedList<ChatUserEntity>();
 		try {
-			TypedQuery<ChatUserEntity> query = entityManager.createNamedQuery("findAll", ChatUserEntity.class);
+			TypedQuery<ChatUserEntity> query = em.createNamedQuery("findAll", ChatUserEntity.class);
 			userEntities = query.getResultList();
 			logger.debug("Found " + userEntities.size() + " Users");
 		} catch (NoResultException nrex) {
 			logger.debug("No Users found in Database");
 		}
-		entityManager.close();
 		return userEntities;
 	}
-	
 	
 	
 }
