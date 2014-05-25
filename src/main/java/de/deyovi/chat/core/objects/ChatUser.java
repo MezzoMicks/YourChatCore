@@ -11,132 +11,132 @@ public interface ChatUser {
 	 * The unique ID of this User
 	 * @return id
 	 */
-	public Long getId();
+	Long getId();
 	
 	/**
 	 * The Name of this User
 	 * @return username
 	 */
-	public String getUserName();
+	String getUserName();
 	
 	/**
 	 * Returns the last known Date, when the User logged in
 	 * @return last login-Date
 	 */
-	public Date getLastLogin();
+	Date getLastLogin();
 
 	/**
 	 * Sets the current login-date of the user 
 	 * @param lastlogin
 	 */
-	public void setLastLogin(Date lastlogin);
+	void setLastLogin(Date lastlogin);
 
 	/**
 	 * Returns the room this User is currently in
 	 * @return {@link Room}
 	 */
-	public Room getCurrentRoom();
+	Room getCurrentRoom();
 
 	/**
 	 * Sets the Room this User is currently in
 	 * @param room
 	 * @param room
 	 */
-	public void setCurrentRoom(Room room);
+	void setCurrentRoom(Room room);
 
-	public boolean isAway();
+	boolean isAway();
 
-	public void setAway(boolean away);
+	void setAway(boolean away);
 
-	public void alive();
+	void alive();
 
-	public long getLastActivity();
+	long getLastActivity();
 
-	public boolean isGuest();
+	boolean isGuest();
 
-	public boolean push(Message message);
+	boolean push(Message message);
 
-	public String getAlias();
+	String getAlias();
 	
-	public void setAlias(String alias);
+	void setAlias(String alias);
 
-	public String getListenId();
+	String getListenId();
 	
-	public String getSessionId();
+	String getSessionId();
 
 	/**
 	 * The last room name, this user was invited to
 	 * @return String roomname or null
 	 */
-	public String getLastInvite();
+	String getLastInvite();
 
 	/**
 	 * Sets the last retrieved invitation (roomname) to a Chat-Room<br>
 	 * Needed for convencie-Method
 	 * @param name
 	 */
-	public void setLastInvite(String name);
+	void setLastInvite(String name);
 
-	public void setListenerTime(long currentTimeMillis);
+	void setListenerTime(long currentTimeMillis);
 
 	/**
 	 * Getter for {@link ChatUserSettings}-Object of this User
 	 * @return {@link ChatUserSettings}
 	 */
-	public ChatUserSettings getSettings();
+	ChatUserSettings getSettings();
 
 	/**
 	 * Setter for {@link ChatUserSettings}-Object of this User
 	 * @param settings
 	 */
-	public void setSettings(ChatUserSettings settings);
+	void setSettings(ChatUserSettings settings);
 
 	/**
 	 * Getter for {@link Profile}-Object for this User
 	 * @return
 	 */
-	public Profile getProfile();
+	Profile getProfile();
 
 	/**
 	 * Setter for {@link Profile}-Object for this User
 	 * @param profile
 	 */
-	public void setProfile(Profile profile);
+	void setProfile(Profile profile);
 
 	/**
 	 * Reads the current (in-chat) message for this User (fifo-principal)
 	 * @return {@link Message}
 	 */
-	public Message read();
+	Message read();
 
 	/**
 	 * adds a {@link MessageEventListener}-Instance to this object
 	 * @param listener
 	 */
-	public void addMessageEventListener(MessageEventListener listener);
+	void addMessageEventListener(MessageEventListener listener);
 
 	/**
 	 * Removes a {@link MessageEventListener}-Instance from this object
 	 * @param listener
 	 */
-	public void removeMessageEventListener(MessageEventListener listener);
+	void removeMessageEventListener(MessageEventListener listener);
 	
 	/**
 	 * With this new Alerts can be added to the users Alert-Stack
 	 * @param alert
 	 */
-	public void addAlert(Alert alert);
+	void addAlert(Alert alert);
 	
 	/**
 	 * Permanent Alerts may be removed using this method
 	 * @param alert
 	 */
-	public void removeAlert(Alert alert);
+	void removeAlert(Alert alert);
 	
 	/**
 	 * Retrieves available Alerts for this User<br>
 	 * Alerts should be removed from Stack by this method (except for permanent Alerts)
 	 */
-	public Collection<Alert> getAlerts();
+	Collection<Alert> getAlerts();
 	
 }

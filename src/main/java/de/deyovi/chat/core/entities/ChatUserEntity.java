@@ -67,7 +67,7 @@ public class ChatUserEntity implements Serializable {
 	private String room;
 	@Basic
 	private Timestamp lastlogin;
-	@OneToOne(fetch = FetchType.LAZY, orphanRemoval = true)
+	@OneToOne(fetch = FetchType.EAGER, orphanRemoval = true)
 	private ProfileEntity profile;
 	@Basic
 	private boolean asyncmode;

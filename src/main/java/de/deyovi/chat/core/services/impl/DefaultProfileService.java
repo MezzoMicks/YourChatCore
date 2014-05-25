@@ -1,24 +1,9 @@
 package de.deyovi.chat.core.services.impl;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.util.LinkedList;
-import java.util.List;
-
-import javax.imageio.ImageIO;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
-
 import de.deyovi.chat.core.constants.ChatConstants.ImageSize;
 import de.deyovi.chat.core.dao.ChatUserDAO;
 import de.deyovi.chat.core.dao.ImageDAO;
 import de.deyovi.chat.core.dao.ProfileDAO;
-import de.deyovi.chat.core.dao.impl.DefaultChatUserDAO;
-import de.deyovi.chat.core.dao.impl.DefaultImageDAO;
-import de.deyovi.chat.core.dao.impl.DefaultProfileDAO;
 import de.deyovi.chat.core.entities.ChatUserEntity;
 import de.deyovi.chat.core.entities.ImageEntity;
 import de.deyovi.chat.core.entities.ProfileEntity;
@@ -30,31 +15,36 @@ import de.deyovi.chat.core.objects.impl.DefaultProfile;
 import de.deyovi.chat.core.services.EntityService;
 import de.deyovi.chat.core.services.ProfileService;
 import de.deyovi.chat.core.utils.ChatUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
 
+import javax.ejb.Stateless;
+import javax.enterprise.context.RequestScoped;
+import javax.imageio.ImageIO;
+import javax.inject.Inject;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.util.LinkedList;
+import java.util.List;
+
+@RequestScoped
 public class DefaultProfileService implements ProfileService {
 	
 	private final static Logger logger = Logger.getLogger(DefaultProfileService.class);
 
-	private volatile static ProfileService _instance;
-	
-	private final ImageDAO imageDAO = DefaultImageDAO.getInstance();
-	private final ProfileDAO profileDAO = DefaultProfileDAO.getInstance();
-	private final ChatUserDAO chatUserDAO = DefaultChatUserDAO.getInstance();
-	private final EntityService entityService = DefaultEntityService.getInstance();
-	
-	public static ProfileService getInstance() {
-		if (_instance == null) {
-			createInstance();
-		}
-		return _instance;
-	}
-	
-	private static synchronized void createInstance() {
-		if (_instance == null) {
-			_instance = new DefaultProfileService();
-		}
-	}
-	
+    @Inject
+    private ChatUtils chatUtils;
+    @Inject
+	private ImageDAO imageDAO;
+    @Inject
+	private ProfileDAO profileDAO;
+    @Inject
+	private ChatUserDAO chatUserDAO;
+    @Inject
+	private EntityService entityService;
+
 	public byte[] getImageData(long id, ImageSize size) {
 		ImageEntity imageEntity = imageDAO.findByID(id);
 		if (imageEntity != null) {
@@ -177,6 +167,7 @@ public class DefaultProfileService implements ProfileService {
 		ProfileEntity profile = user.getProfile();
 		if (profile == null) {
 			profile = new ProfileEntity();
+            entityService.persistOrMerge(profile, true);
 			user.setProfile(profile);
 			entityService.persistOrMerge(user, false);
 		}
@@ -223,17 +214,17 @@ public class DefaultProfileService implements ProfileService {
 			// create preview (280) and store it
 	        baos.reset();
 	        int previewSize = ImageSize.PREVIEW.getSize();
-	        ChatUtils.createResized(image, baos, previewSize, previewSize, null);
+	        chatUtils.createResized(image, baos, previewSize, previewSize, null);
 	        newEntity.setPreview(baos.toByteArray());
 	        baos.reset();
 	        // create thumbnail (160) and store it
 	        int thumbSize = ImageSize.THUMBNAIL.getSize();
-	        ChatUtils.createResized(image, baos, thumbSize, thumbSize, null);
+	        chatUtils.createResized(image, baos, thumbSize, thumbSize, null);
 	        newEntity.setThumbnail(baos.toByteArray());
 	        baos.reset();
 	        // create pinkynail (64) and store it
 	        int pinkySize = ImageSize.PINKY.getSize();
-	        ChatUtils.createResized(image, baos, pinkySize, pinkySize, null);
+	        chatUtils.createResized(image, baos, pinkySize, pinkySize, null);
 	        newEntity.setPinkynail(baos.toByteArray());
 	        baos.close();
 	        // write to db

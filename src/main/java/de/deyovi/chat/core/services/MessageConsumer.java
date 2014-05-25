@@ -1,9 +1,9 @@
 package de.deyovi.chat.core.services;
 
-import java.util.Locale;
-
 import de.deyovi.chat.core.objects.Segment;
 import de.deyovi.chat.core.services.OutputService.OutputMeta;
+
+import java.util.Locale;
 
 public interface MessageConsumer {
 	

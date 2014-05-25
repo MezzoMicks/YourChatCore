@@ -1,21 +1,20 @@
 package de.deyovi.chat.core.services.impl;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.atomic.AtomicLong;
-
+import de.deyovi.chat.core.constants.ChatConstants;
+import de.deyovi.chat.core.objects.ChatUser;
+import de.deyovi.chat.core.objects.Segment;
+import de.deyovi.chat.core.objects.Segment.ContentType;
+import de.deyovi.chat.core.objects.impl.CommandSegment;
+import de.deyovi.chat.core.services.MessageConsumer;
+import de.deyovi.chat.core.services.OutputService.OutputMeta;
+import de.deyovi.chat.core.utils.ChatUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import de.deyovi.chat.core.objects.ChatUser;
-import de.deyovi.chat.core.objects.Segment;
-import de.deyovi.chat.core.objects.Segment.ContentType;
-import de.deyovi.chat.core.services.MessageConsumer;
-import de.deyovi.chat.core.services.OutputService.OutputMeta;
-import de.deyovi.chat.core.services.TranslatorService;
-import de.deyovi.chat.core.utils.ChatUtils;
+import java.io.IOException;
+import java.util.Locale;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class HTMLMessageConsumer implements MessageConsumer {
 
@@ -53,24 +52,14 @@ public class HTMLMessageConsumer implements MessageConsumer {
 
 	private final static AtomicLong ANCHOR_COUNT = new AtomicLong();
 
-	private final TranslatorService translatorService = ResourceTranslatorService.getInstance();
-	
 	private final Appendable target;
-	
+
 	private boolean refresh = false;
 	private boolean stop = false;
 
-	public HTMLMessageConsumer() {
-		this(null);
-	}
-	
-	public HTMLMessageConsumer(Appendable target) {
-		if (target != null) {
-			this.target = target;
-		} else {
-			this.target = new StringBuilder();
-		}
-	}
+    public HTMLMessageConsumer(Appendable target) {
+        this.target = target;
+    }
 	
 	private String decorateText(String text) {
 		text = ChatUtils.escape(text);
@@ -138,17 +127,12 @@ public class HTMLMessageConsumer implements MessageConsumer {
 			for (Segment seg : segments) {
 				String content = seg.getContent();
 				if (seg.getType() == ContentType.TEXT) {
-					if (content.charAt(0) == '$') {
-						if (content.startsWith("$PROFILE_OPEN")) {
-							List<String> parsedMessage = translatorService.parse(content);
-							profile = parsedMessage.get(1);
-							content = translatorService.translate(parsedMessage, locale);
-						} else {
-							content = translatorService.translate(content, locale);
-						}		
-					}
 					content = decorateText(content);
-				} else {
+				} else if (seg.getType() == ContentType.COMMAND) {
+                    if (((CommandSegment) seg).getChatCommand() == ChatConstants.ChatCommand.PROFILE) {
+                        profile = ((CommandSegment) seg).getPayload();
+                    }
+                } else {
 					content = decorateLink(seg);
 				}
                 if (content != null) {

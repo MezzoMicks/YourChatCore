@@ -1,9 +1,10 @@
 package de.deyovi.chat.core.services;
 
-import java.util.List;
-
+import de.deyovi.aide.Outcome;
 import de.deyovi.chat.core.objects.ChatUser;
 import de.deyovi.chat.core.objects.Message;
+
+import java.util.List;
 
 public interface ChatUserService {
 
@@ -56,9 +57,9 @@ public interface ChatUserService {
      * @param sugar
      * @return ChatUser (if login was successful, otherwise null)
      */
-	public ChatUser login(String username, String pwHash, String sugar);
+	public Outcome<ChatUser> login(String username, String pwHash, String sugar);
 
-	public ChatUser register(String username, String password, String invitationKey, String sugar);
+	public Outcome<ChatUser> register(String username, String password, String invitationKey, String sugar);
 
     /**
      * Retrieves a List of all currently logged in ChatUsers

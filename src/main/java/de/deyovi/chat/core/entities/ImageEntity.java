@@ -26,16 +26,16 @@ public class ImageEntity {
 	@Basic
 	@Column(length=255)
 	private String filename;
-	@Basic(fetch = FetchType.LAZY)
+	@Basic(fetch = FetchType.EAGER)
 	@Lob
 	private byte[] original;
-	@Basic(fetch = FetchType.LAZY)
+	@Basic(fetch = FetchType.EAGER)
 	@Lob
 	private byte[] preview;
-	@Basic(fetch = FetchType.LAZY)
+	@Basic(fetch = FetchType.EAGER)
 	@Lob
 	private byte[] thumbnail;
-	@Basic(fetch = FetchType.LAZY)
+	@Basic(fetch = FetchType.EAGER)
 	@Lob
 	private byte[] pinkynail;
 

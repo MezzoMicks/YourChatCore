@@ -10,8 +10,10 @@ import de.deyovi.chat.core.services.OutputService.OutputMeta;
 
 public interface OutputFacade {
 
-	public OutputMeta listen(MessageConsumer consumer, Locale locale, ChatUser user, String listenId);
+	OutputMeta listen(MessageConsumer consumer, Locale locale, ChatUser user, String listenId);
 
-	public JSONObject refresh(ChatUser user, Locale locale);
+	JSONObject refresh(ChatUser user, Locale locale);
+
+    String register(ChatUser user);
 
 }

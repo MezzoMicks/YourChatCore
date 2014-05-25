@@ -12,6 +12,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -23,36 +24,42 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import javax.ejb.Singleton;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
 
+import de.deyovi.chat.core.services.FileStoreService;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.log4j.Logger;
 
-import de.deyovi.chat.core.services.impl.DefaultFileStoreService;
+import javax.ejb.Stateless;
+import javax.inject.Inject;
+import javax.naming.InitialContext;
 
+@Stateless
 public class ChatUtils {
 
 	private final static Logger logger = Logger.getLogger(ChatUtils.class);
 
-	public static String createAndStoreResized(String prefix,
-			InputStream stream, String filename, int width, int height,
+    @Inject
+    private FileStoreService fileStoreService;
+
+	public String createAndStoreResized(String prefix, InputStream stream, String filename, int width, int height,
 			Color backdrop) throws IOException {
 		logger.info("Creating Thumbnail for " + filename);
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		ChatUtils.createResized(stream, bos, width, height, null);
+		createResized(stream, bos, width, height, null);
 		return store(prefix, filename, bos);
 	}
 
-	public static String createAndStoreResized(String prefix,
-			BufferedImage image, String filename, int width, int height,
+	public String createAndStoreResized(String prefix, BufferedImage image, String filename, int width, int height,
 			Color backdrop) throws IOException {
 		logger.info("Creating Thumbnail for " + filename);
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		ChatUtils.createResized(image, bos, width, height, null);
+		createResized(image, bos, width, height, null);
 		return store(prefix, filename, bos);
 	}
 
@@ -60,13 +67,13 @@ public class ChatUtils {
 	 * Creates a thumbnail for an image, resulting in an imagefile of reduced
 	 * size and lower quality
 	 * 
-	 * @param url
-	 * @param target
-	 * @param width
-	 * @param height
+	 * @param input
+	 * @param output
+	 * @param targetWidth
+	 * @param targetHeight
+     * @param backdrop
 	 */
-	public static void createResized(InputStream input, OutputStream output,
-			int targetWidth, int targetHeight, Color backdrop) {
+	public void createResized(InputStream input, OutputStream output, int targetWidth, int targetHeight, Color backdrop) {
 		try {
 			ImageInputStream iios = ImageIO.createImageInputStream(input);
 			BufferedImage src = ImageIO.read(iios);
@@ -76,8 +83,7 @@ public class ChatUtils {
 		}
 	}
 
-	public static void createResized(BufferedImage image, OutputStream output,
-			int targetWidth, int targetHeight, Color backdrop) {
+	public void createResized(BufferedImage image, OutputStream output, int targetWidth, int targetHeight, Color backdrop) {
 		try {
 			if (image != null) {
 				int width = image.getWidth();
@@ -204,8 +210,7 @@ public class ChatUtils {
 	 * @param maxHeight
 	 * @return int[] 0 = width; 1 = height; 2 = posX; 3 = posY
 	 */
-	private static int[] getThumbsize(int width, int height, int maxWidth,
-			int maxHeight) {
+	private int[] getThumbsize(int width, int height, int maxWidth, int maxHeight) {
 		if (width == height) {
 			return new int[] { maxWidth, maxHeight, 0, 0 };
 		} else {
@@ -278,12 +283,12 @@ public class ChatUtils {
 	 * Lays an transparent overlay over the Image Snippet: thanks to Josiah
 	 * Hester on javalobby.org
 	 * 
-	 * @param upload
+	 * @param input
+     * @param output
+     * @param backdrop
 	 * @throws IOException
-	 * @throws FileNotFoundException
 	 */
-	public static void makeImageMoreTransparent(InputStream input,
-			OutputStream output, Color backdrop) throws IOException {
+	public void makeImageMoreTransparent(InputStream input, OutputStream output, Color backdrop) throws IOException {
 		BufferedImage bgImage;
 		bgImage = ImageIO.read(input);
 		BufferedImage newImg = new BufferedImage(bgImage.getWidth(),
@@ -306,8 +311,7 @@ public class ChatUtils {
 		ios.close();
 	}
 
-	private static String store(String prefix, String filename,
-			ByteArrayOutputStream bos) {
+	private String store(String prefix, String filename, ByteArrayOutputStream bos) {
 		ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
 		String name = ChatUtils.replaceSpecialChars(filename != null ? filename
 				: "unknown");
@@ -316,7 +320,7 @@ public class ChatUtils {
 			name = name.substring(0, lastIxOfDot);
 		}
 		name += ".jpg";
-		name = DefaultFileStoreService.getInstance().store(bis, prefix + name);
+		name = fileStoreService.store(bis, prefix + name);
 		return name;
 	}
 
@@ -329,6 +333,41 @@ public class ChatUtils {
 			return input;
 		}
 	}
+
+    public static <T> List<T> getBeansForType(Class<T> type) {
+        List<Class> assignableClasses = new LinkedList<Class>();
+        List<String> classes = ChatUtils.getClassNamesFromPackage("de.deyovi.chat", true);
+        for (String className : classes) {
+            try {
+                Class<?> clazz = Class.forName(className);
+                if ((clazz.getModifiers() & Modifier.ABSTRACT) == 0 && (clazz.getModifiers() & Modifier.INTERFACE) == 0 ) {
+                    if (type.isAssignableFrom(clazz)) {
+                        assignableClasses.add(clazz);
+                    }
+                }
+            } catch (ClassNotFoundException e) {
+                logger.error("Error while scanning Controllers", e);
+            }
+        }
+        List<T> beans = new LinkedList<T>();
+        for (Class clazz : assignableClasses) {
+            try {
+                T bean;
+                if (clazz.getAnnotationsByType(Singleton.class).length > 0 || clazz.getAnnotationsByType(Stateless.class).length > 0) {
+                    logger.info("Lookup for Bean:" + clazz.getName());
+
+                    bean = InitialContext.doLookup("java:global/YourChatWeb/" + clazz.getSimpleName());
+                } else {
+                    logger.info("Instantiating Bean:" + clazz.getName());
+                    bean = (T) clazz.getConstructors()[0].newInstance();
+                }
+                beans.add(bean);
+            } catch (Exception e) {
+                logger.error("Error while instantiating Bean:" + clazz.getName(), e);
+            }
+        }
+        return beans;
+    }
 
 	public static List<String> getClassNamesFromPackage(String packageName, boolean recurse) {
 		List<String> names = new LinkedList<String>();
@@ -382,27 +421,5 @@ public class ChatUtils {
 		}
 		return names;
 	}
-	
-	public static boolean checkInheritance(Class clazz, Class superclass) {
-		if (superclass != null) {
-			Class<?>[] interfaces = clazz.getInterfaces();
-			Class clazzesSuperClass = clazz.getSuperclass();
-			if (superclass.equals(clazzesSuperClass)) {
-				return true;
-			} else {
-				if (clazzesSuperClass != null && checkInheritance(clazzesSuperClass, superclass)) {
-					return true;
-				} else {
-					for (Class<?> iface : interfaces) {
-						if (iface.equals(superclass)) {
-							return true;
-						} else if (checkInheritance(iface, superclass)) {
-							return true;
-						}
-					}
-				}
-			}
-		}
-		return false;
-	}
+
 }

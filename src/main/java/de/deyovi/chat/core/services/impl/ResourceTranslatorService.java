@@ -1,37 +1,22 @@
 package de.deyovi.chat.core.services.impl;
 
-import java.text.MessageFormat;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.ResourceBundle;
-import java.util.StringTokenizer;
-
+import de.deyovi.chat.core.services.TranslatorService;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import de.deyovi.chat.core.services.TranslatorService;
+import javax.ejb.Singleton;
+import java.text.MessageFormat;
+import java.util.*;
 
+@Singleton
 public class ResourceTranslatorService implements TranslatorService {
 
 	private final static Logger logger = LogManager.getLogger(ResourceTranslatorService.class);
 
-	private final static Map<Locale, ResourceBundle> lang2resource = new HashMap<Locale, ResourceBundle>();
+	private final Map<Locale, ResourceBundle> lang2resource = new HashMap<Locale, ResourceBundle>();
 	
-	private final static ResourceTranslatorService instance = new ResourceTranslatorService();
-	
-	private ResourceTranslatorService() {
-		// hitdden
-	}
-	
-	public static ResourceTranslatorService getInstance() {
-		return instance;
-	}
-	
-	private static ResourceBundle getResource(Locale locale) {
+	private ResourceBundle getResource(Locale locale) {
 		ResourceBundle instance = lang2resource.get(locale);
 		if (instance == null) {
 			instance = createInstance(locale);
@@ -39,7 +24,7 @@ public class ResourceTranslatorService implements TranslatorService {
 		return instance;
 	}
 	
-	private static synchronized ResourceBundle createInstance(Locale locale) {
+	private synchronized ResourceBundle createInstance(Locale locale) {
 		ResourceBundle instance = lang2resource.get(locale);
 		if (instance == null) {
 			instance = ResourceBundle.getBundle("de.deyovi.chat.messages", locale);

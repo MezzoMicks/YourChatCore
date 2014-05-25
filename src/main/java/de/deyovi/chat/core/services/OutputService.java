@@ -1,27 +1,26 @@
 package de.deyovi.chat.core.services;
 
-import java.util.Locale;
-
-import org.json.JSONObject;
-
 import de.deyovi.chat.core.objects.ChatUser;
 import de.deyovi.chat.core.objects.Message;
+import org.json.JSONObject;
+
+import java.util.Locale;
 
 public interface OutputService {
 
-	public OutputMeta processMessages(Message[] message, Locale locale, MessageConsumer consumer);
+	OutputMeta processMessages(Message[] message, Locale locale, MessageConsumer consumer);
 	
-	public JSONObject getRefreshData(ChatUser user, Locale locale);
+	JSONObject getRefreshData(ChatUser user, Locale locale);
 	
 	public interface OutputMeta {
 		
-		public ChatUser getOrigin();
+		ChatUser getOrigin();
 		
-		public boolean isRefreshRequired();
+		boolean isRefreshRequired();
 		
-		public boolean isInterrupted();
+		boolean isInterrupted();
 		
-		public int interruptionReason();
+		int interruptionReason();
 		
 	}
 	

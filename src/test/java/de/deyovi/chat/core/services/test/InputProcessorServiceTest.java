@@ -17,7 +17,7 @@ public class InputProcessorServiceTest {
 	@Before
 	public void setup() {
 		ChatConfiguration.initialize();
-		service = DefaultInputProcessorService.getInstance();
+		service = new DefaultInputProcessorService();
 	}
 	
 	@Test

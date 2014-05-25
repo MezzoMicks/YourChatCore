@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
+import de.deyovi.chat.core.services.RoomService;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
@@ -18,39 +19,27 @@ import de.deyovi.chat.core.services.OutputService.OutputMeta;
 import de.deyovi.chat.core.services.impl.DefaultOutputService;
 import de.deyovi.chat.facades.OutputFacade;
 
+import javax.ejb.Singleton;
+import javax.inject.Inject;
+
+@Singleton
 public class DefaultOutputFacade implements OutputFacade {
 
 	private static final Logger logger = LogManager.getLogger(DefaultOutputFacade.class);
 	private static final Message[] NO_MESSAGES = new Message[0];
-	private final OutputService service = DefaultOutputService.getInstance();
-	
-	private static volatile DefaultOutputFacade instance = null;
-	
-	private DefaultOutputFacade() {
-		// hidden
-	}
+	@Inject
+    private OutputService service;
+    @Inject
+    private RoomService roomService;
 
-	public static OutputFacade getInstance() {
-		if (instance == null) {
-			createInstance();
-		}
-		return instance;
-	}
-
-	private static synchronized void createInstance() {
-		if (instance == null) {
-			instance = new DefaultOutputFacade();
-		}
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.deyovi.chat.facades.impl.OutputFacade#listen(java.lang.Appendable,
-	 * java.util.Locale, boolean, de.deyovi.chat.core.objects.ChatUser,
-	 * java.lang.String)
-	 */
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * de.deyovi.chat.facades.impl.OutputFacade#listen(java.lang.Appendable,
+     * java.util.Locale, boolean, de.deyovi.chat.core.objects.ChatUser,
+     * java.lang.String)
+     */
 	@Override
 	public OutputMeta listen(MessageConsumer consumer, Locale locale, ChatUser user, String listenId) {
 		Message[] messages = listen(user, listenId);
@@ -83,5 +72,14 @@ public class DefaultOutputFacade implements OutputFacade {
 	public JSONObject refresh(ChatUser user, Locale locale) {
 		return service.getRefreshData(user, locale);
 	}
+
+    @Override
+    public String register(ChatUser user) {
+        logger.info(user + 	" registers to Listen");
+        user.setListenerTime(System.currentTimeMillis());
+        user.alive();
+        roomService.join(user.getCurrentRoom(), user);
+        return user.getListenId();
+    }
 
 }

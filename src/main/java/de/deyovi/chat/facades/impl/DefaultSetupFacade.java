@@ -4,32 +4,17 @@ import de.deyovi.chat.core.services.EntityService;
 import de.deyovi.chat.core.services.impl.DefaultEntityService;
 import de.deyovi.chat.facades.SetupFacade;
 
+import javax.ejb.Stateless;
+import javax.inject.Inject;
+
+@Stateless
 public class DefaultSetupFacade implements SetupFacade {
-	
-	private volatile static DefaultSetupFacade instance = null;
-	
-	private DefaultSetupFacade() {
-		// hidden
-	}
-	
-	public static DefaultSetupFacade getInstance() {
-		if (instance == null) {
-			createInstance();
-		}
-		return instance;
-	}
-	
-	private static synchronized void createInstance() {
-		if (instance == null) {
-			instance = new DefaultSetupFacade();
-		}
-	}
-	
-	private final EntityService entityService = DefaultEntityService.getInstance();
-	
+
+    @Inject
+	private EntityService entityService;
+
 	@Override
 	public void initialize(String username, String password) {
-		entityService.initialize(username, password);
 	}
 	
 	@Override
@@ -38,7 +23,7 @@ public class DefaultSetupFacade implements SetupFacade {
 	
 	@Override
 	public boolean isInitialized() {
-		return entityService.isInitialized();
+		return true;
 	}
 	
 }

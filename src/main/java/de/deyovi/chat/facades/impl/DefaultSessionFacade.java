@@ -2,56 +2,54 @@ package de.deyovi.chat.facades.impl;
 
 import org.apache.log4j.Logger;
 
+import de.deyovi.aide.Notice.Level;
+import de.deyovi.aide.Outcome;
+import de.deyovi.aide.impl.DefaultOutcome;
+import de.deyovi.chat.core.objects.Alert;
+import de.deyovi.chat.core.objects.Alert.Lifespan;
 import de.deyovi.chat.core.objects.ChatUser;
+import de.deyovi.chat.core.objects.impl.DefaultAlert;
 import de.deyovi.chat.core.services.ChatUserService;
 import de.deyovi.chat.core.services.impl.DefaultChatUserService;
 import de.deyovi.chat.core.utils.PasswordUtil;
 import de.deyovi.chat.facades.SessionFacade;
 
+import javax.ejb.Stateless;
+import javax.inject.Inject;
+
+@Stateless
 public class DefaultSessionFacade implements SessionFacade {
 
 	private final static Logger logger = Logger.getLogger(DefaultSessionFacade.class);
 	
 	private static volatile DefaultSessionFacade instance = null;
-	
-	private final ChatUserService chatUserService = DefaultChatUserService.getInstance();
-	
-	private DefaultSessionFacade() {
-		// hidden
-	}
-	
-	public static DefaultSessionFacade getInstance() {
-		if (instance == null) {
-			createInstance();
-		}
-		return instance;
-	}
-	
-	private static synchronized void createInstance() {
-		if (instance == null) {
-			instance = new DefaultSessionFacade();
-		}
-	}
+
+    @Inject
+	private ChatUserService chatUserService;
 	
 	@Override
-	public ChatUser login(String username, String password, String sugar) {
-		ChatUser newUser;
+	public Outcome<ChatUser> login(String username, String password, String sugar) {
 		logger.debug("login -> user:" + username + " pass: " + password + " sugar: " + sugar);
 		sugar = sugarCheck(username, sugar);
 		if (sugar != null) {
-			newUser = chatUserService.login(username, password, sugar);
-			logger.debug("user: " + username + " sucessfully logged in");
+			logger.debug("login -> extracted sugar :" + sugar);
+			return chatUserService.login(username, password, sugar);
 		} else {
-			newUser = null;
+			Alert error = new DefaultAlert("alert.authentication.internal", Level.ERROR, Lifespan.NORMAL);
+			return new DefaultOutcome<ChatUser>(null, error);
 		}
-		return newUser;
 	}
 	
 	@Override
-	public ChatUser register(String username, String password, String inviteKey, String sugar) {
+	public Outcome<ChatUser> register(String username, String password, String inviteKey, String sugar) {
 		logger.debug("register -> user:" + username + " pass: " + password + " sugar: " + sugar);
-		ChatUser newUser = chatUserService.register(username, password, inviteKey, sugar);
-		return newUser;
+		sugar = sugarCheck(username, sugar);
+		if (sugar != null) {
+			return chatUserService.register(username, password, inviteKey, sugar);
+		} else {
+			Alert error = new DefaultAlert("alert.authentication.internal", Level.ERROR, Lifespan.NORMAL);
+			return new DefaultOutcome<ChatUser>(null, error);
+		}
 	}
 	
 	@Override

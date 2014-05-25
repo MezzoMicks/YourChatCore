@@ -26,7 +26,12 @@ public class TextSegment implements Segment {
 		return user;
 	}
 
-	@Override
+    @Override
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    @Override
 	public ContentType getType() {
 		return ContentType.TEXT;
 	}

@@ -26,17 +26,6 @@ public interface EntityService {
 	public void remove(Object entity);
 
     /**
-     * Initializes the System, erasing all current data
-     */
-	public void initialize(String username, String password);
-
-    /**
-     * Checks if the System has already been initialized
-     * @return true if System is initialized
-     */
-    public boolean isInitialized();
-
-    /**
      * Retrieves the EntityManagerFactory 
      * This Method should be used and preferred to prevent unclosed Factory-Resources on undeployment
      * @return {@link EntityManagerFactory}

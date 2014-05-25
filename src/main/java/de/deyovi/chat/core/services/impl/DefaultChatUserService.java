@@ -1,92 +1,85 @@
 package de.deyovi.chat.core.services.impl;
 
-import java.lang.reflect.Array;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.log4j.Logger;
-
+import de.deyovi.aide.Notice;
+import de.deyovi.aide.Notice.Level;
+import de.deyovi.aide.Outcome;
+import de.deyovi.aide.impl.DefaultOutcome;
 import de.deyovi.chat.core.constants.ChatConstants.MessagePreset;
 import de.deyovi.chat.core.dao.ChatUserDAO;
-import de.deyovi.chat.core.dao.impl.DefaultChatUserDAO;
 import de.deyovi.chat.core.entities.ChatUserEntity;
+import de.deyovi.chat.core.objects.Alert.Lifespan;
 import de.deyovi.chat.core.objects.ChatUser;
 import de.deyovi.chat.core.objects.Message;
 import de.deyovi.chat.core.objects.Room;
+import de.deyovi.chat.core.objects.impl.DefaultAlert;
 import de.deyovi.chat.core.objects.impl.DefaultChatUser;
 import de.deyovi.chat.core.objects.impl.DefaultChatUserSettings;
 import de.deyovi.chat.core.objects.impl.SystemMessage;
 import de.deyovi.chat.core.services.ChatUserService;
 import de.deyovi.chat.core.services.EntityService;
 import de.deyovi.chat.core.services.ProfileService;
+import de.deyovi.chat.core.services.RoomService;
 import de.deyovi.chat.core.utils.ChatConfiguration;
 import de.deyovi.chat.core.utils.PasswordUtil;
+import org.apache.log4j.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.Singleton;
+import javax.inject.Inject;
+import java.sql.Timestamp;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Default Implementation for ChatUserService
  * @author Michi
  *
  */
+@Singleton
 public class DefaultChatUserService implements ChatUserService {
 
 	private final static Logger logger = Logger.getLogger(DefaultChatUserService.class);
 
-	private static final long MINUTE = 1000 * 60;
+	private final static long MINUTE = 1000 * 60;
 	private final static long A_DAY_IN_MILLIS = MINUTE * 60 * 24;
-
-	private final static Map<String, ChatUser> sessions2users = new HashMap<String, ChatUser>();
-	private final static Map<String, ChatUser> names2users = new TreeMap<String, ChatUser>();
-	private final static Map<String, ChatInvitation> invitations = new HashMap<String, ChatInvitation>();
-
 	private final static long TIMEOUT = MINUTE * 60;
 	private final static long AWAY_TIMEOUT = 6 * TIMEOUT;
 
-	private volatile static ChatUserService _instance;
-	private final Room defaultRoom;
-	
-	
-	public static ChatUserService getInstance() {
-		if (_instance == null) {
-			createInstance();
-		}
-		return _instance;
-	}
-	
-	private static synchronized void createInstance() {
-		if (_instance == null) {
-			_instance = new DefaultChatUserService();
-		}
-	}
+    private final Map<String, ChatUser> sessions2users = new HashMap<String, ChatUser>();
+    private final Map<String, ChatUser> names2users = new TreeMap<String, ChatUser>();
+    private final Map<String, ChatInvitation> invitations = new HashMap<String, ChatInvitation>();
+
+	private Room defaultRoom;
 
 	private final AtomicLong ids = new AtomicLong(System.currentTimeMillis());
-	private final ChatUserDAO chatUserDAO = DefaultChatUserDAO.getInstance();
-	private final EntityService entityService = DefaultEntityService.getInstance();
-	private final ProfileService profileService = DefaultProfileService.getInstance();
-	
-	private DefaultChatUserService() {
+    @Inject
+	private ChatUserDAO chatUserDAO;
+    @Inject
+	private EntityService entityService;
+	@Inject
+    private ProfileService profileService;
+    @Inject
+    private RoomService roomService;
+
+    @PostConstruct
+    private void setup() {
         Thread timeoutThread = new MyTimeoutThread();
-		timeoutThread.start();
-		defaultRoom = DefaultRoomService.getInstance().getDefault();
-	}
+        timeoutThread.start();
+        defaultRoom = roomService.getDefault();
+    }
 	
-	public ChatUser login(String username, String pwHash, String sugar) {
+	public Outcome<ChatUser> login(String username, String pwHash, String sugar) {
 		logger.info("User " + username + " tries to login");
 		ChatUser result = validatePassword(username, pwHash, sugar);
+		Notice error = null;
 		if (result == null) {
+			error = new DefaultAlert("alert.login.wrongcredentials", Level.ERROR, Lifespan.NORMAL);
 			logger.info("User[" + username + "] tried to login, invalid Username or Password supplied!");
 		} else {
-			defaultRoom.join(result);
+			roomService.join(defaultRoom, result);
+			logger.info(username + " logged in");
 		}
-		return result;
+		return new DefaultOutcome<ChatUser>(result, error);
 	}
 	
 	@Override
@@ -105,29 +98,30 @@ public class DefaultChatUserService implements ChatUserService {
 	 *            (needed if invitationKey is hashed!)
 	 * @return boolean
 	 */
-	public ChatUser register(String username, String password, String invitationKey, String sugar) {
+	public Outcome<ChatUser> register(String username, String password, String invitationKey, String sugar) {
 		boolean ok = false;
 		username = username != null ? username.trim() : null;
+		Notice error = null;
 		// Is the Username long enough?
 		if (username.length() < 4) {
+			error = new DefaultAlert("alert.register.nametooshort", Level.ERROR, Lifespan.NORMAL);
 			logger.info(username + "'s registration rejected, username : '"	+ (username) + "' must be at least 4 chars");
 		// or is it already given?
 		} else if (chatUserDAO.findChatUserByName(username) != null) {
+			error = new DefaultAlert("alert.register.namegiven", Level.ERROR, Lifespan.NORMAL);
 			logger.info(username + "'s registration rejected, username '" + username + "' already given");
-		// no problem
-		} else {
-			// then check if there's an invitation needed and available
-			if (ChatConfiguration.isInvitationRequired()) {
-				ChatInvitation invitation = getInvitation(username, invitationKey, sugar, false);
-				if (invitation != null && !invitation.isTrial()) {
-					ok = true;
-				} else {
-					logger.info(username + "'s registration revoked : " + (invitation == null ? "not invited" : "trial-invitation"));
-				}
-			} else {
-				// no invitation required? no problem :)
+		// no problem then check if there's an invitation needed and available
+		} else if (ChatConfiguration.isInvitationRequired()) {
+			ChatInvitation invitation = getInvitation(username, invitationKey, sugar, false);
+			if (invitation != null && !invitation.isTrial()) {
 				ok = true;
+			} else {
+				error = new DefaultAlert("alert.register.invalidkey", Level.ERROR, Lifespan.NORMAL);
+				logger.info(username + "'s registration revoked : " + (invitation == null ? "not invited" : "trial-invitation"));
 			}
+		} else {
+			// no invitation required? no problem :)
+			ok = true;
 		}
 		// all ok, lets create a new User
 		if (ok) {
@@ -136,9 +130,9 @@ public class DefaultChatUserService implements ChatUserService {
 			newUser.setName(username);
 			newUser.setPassword(password);
 			entityService.persistOrMerge(newUser, true);
-			return convert(newUser);
+			return new DefaultOutcome<ChatUser>(convert(newUser));
 		} else {
-			return null;
+			return new DefaultOutcome<ChatUser>(null, error);
 		}
 	}
 
@@ -147,13 +141,13 @@ public class DefaultChatUserService implements ChatUserService {
 		_logout(user);
 	}
 	
-	private static void _logout(ChatUser user) {
+	private void _logout(ChatUser user) {
 		sessions2users.remove(user.getSessionId());
 		String lcUserName = user.getUserName().trim().toLowerCase();
 		names2users.remove(lcUserName);
 		Room room = user.getCurrentRoom();
 		if (room != null) {
-			room.leave(user);
+			roomService.join(null, user);
 		}
 		_broadcast(new SystemMessage(null, 0l, MessagePreset.REFRESH));
 	}
@@ -173,21 +167,8 @@ public class DefaultChatUserService implements ChatUserService {
 		}
 	}
 
-	public ChatUser getByPermanentByName(String name) {
-		if (name != null) {
-			String lcUserName = name.trim().toLowerCase();
-			return names2users.get(lcUserName);
-		} else {
-			return null;
-		}
-	}
-	
 	public Collection<ChatUser> getUsers() {
-		return _getUsers();
-	}
-	
-	private static Collection<ChatUser> _getUsers() {
-		return names2users.values();
+		return  names2users.values();
 	}
 
 	private String getSessionID() {
@@ -262,7 +243,7 @@ public class DefaultChatUserService implements ChatUserService {
 			}
 			userEntity.setAsyncmode(asyncmode);
 			user.getSettings().setAsyncmode(asyncmode);
-			DefaultEntityService.getInstance().persistOrMerge(userEntity, false);
+			entityService.persistOrMerge(userEntity, false);
 		} else {
 			if (isFontOk(font)) {
 				user.getSettings().setFont(font);
@@ -278,8 +259,8 @@ public class DefaultChatUserService implements ChatUserService {
 		_broadcast(msg);
 	}
 	
-	private static void _broadcast(Message msg) {
-		for (ChatUser user : _getUsers()) {
+	private void _broadcast(Message msg) {
+		for (ChatUser user : getUsers()) {
 			user.push(msg);
 		}
 	}
@@ -346,15 +327,15 @@ public class DefaultChatUserService implements ChatUserService {
 		return invitation;
 	}
 
-	private static boolean isRoomOk(String room) {
+	private boolean isRoomOk(String room) {
 		if (room == null) {
 			return true;
 		} else {
-			return DefaultRoomService.getInstance().isMainRoom(room);
+			return roomService.isMainRoom(room);
 		}
 	}
 
-	private static boolean isFontOk(String font) {
+	private boolean isFontOk(String font) {
 		if (font == null) {
 			return true;
 		} else {
@@ -489,7 +470,7 @@ public class DefaultChatUserService implements ChatUserService {
 								logger.info("Timeout for User " + user);
 								user.push(new SystemMessage(null, 0l, MessagePreset.TIMEOUT));
 								Thread.sleep(5000); // Timing-Problem, want to make sure the Client will fetch the Message
-								DefaultChatUserService._logout(user);
+								_logout(user);
 							}
 						} else {
 							names2users.remove(key);

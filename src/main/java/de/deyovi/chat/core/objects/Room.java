@@ -7,25 +7,21 @@ import java.util.List;
 
 public interface Room {
 
-	public Collection<ChatUser> getUsers();
+	Collection<ChatUser> getUsers();
 
-	public boolean isVisible();
+	boolean isVisible();
 
-	public boolean isMember(ChatUser user);
+	boolean isMember(ChatUser user);
 
-	public String getName();
+	String getName();
 
-	public String getColor();
+	String getColor();
 
-	public void leave(ChatUser user);
+	boolean isAnonymous();
 
-	public void join(ChatUser user);
+	ChatUser getOwner();
 
-	public boolean isAnonymous();
-
-	public ChatUser getOwner();
-
-	public boolean isInvited(ChatUser user);
+	boolean isInvited(ChatUser user);
 
 	boolean invite(ChatUser inviteeUser);
 
@@ -48,6 +44,8 @@ public interface Room {
 	void setAnonymous(boolean b);
 
 	void setMotd(ChatUser username, Segment[] segments) ;
+
+    Message getMotd();
 
 	RoomInfo getInfoForUser(ChatUser user);
 	
@@ -80,33 +78,33 @@ public interface Room {
 		 * Returns this channels name
 		 * @return {@link String}
 		 */
-		public String getName();
+		String getName();
 		
 		/**
 		 * Returns this channels color in webformat
 		 * @return Hex-String like #FFCCCC
 		 */
-		public String getBgColor();
+		String getBgColor();
 		
 		/**
 		 * Returns this channels text color in webformat
 		 * @return Hex-String like #FFCCCC
 		 */
-		public String getFgColor();
+		String getFgColor();
 		
-		public String getBgImage();
+		String getBgImage();
 		
 		/**
 		 * Returns the members of this room
 		 * @return Array of {@link String} representing the users
 		 */
-		public ChatUser[] getUsers();
+		ChatUser[] getUsers();
 		
 		/**
 		 * Returns the List of MediaSegments, that occured in this room
 		 * @return Array of {@link MediaSegment}
 		 */
-		public Segment[] getMedia();
+		Segment[] getMedia();
 		
 	}
 

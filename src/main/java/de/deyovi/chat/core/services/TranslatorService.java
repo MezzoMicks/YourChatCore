@@ -10,15 +10,15 @@ public interface TranslatorService {
 	 * @param rawMessage
 	 * @return translated Message
 	 */
-	public String translate(String rawMessage, Locale locale);
+	String translate(String rawMessage, Locale locale);
 
 	/**
 	 * Translates a Message for representation
 	 * @param parsedMessage
 	 * @return translated Message
 	 */
-	public String translate(List<String> parsedMessage, Locale locale);
+	String translate(List<String> parsedMessage, Locale locale);
 	
-	public List<String> parse(String input);
+	List<String> parse(String input);
 
 }

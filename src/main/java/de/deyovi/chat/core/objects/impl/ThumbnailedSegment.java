@@ -26,7 +26,12 @@ public class ThumbnailedSegment implements Segment {
 	}
 
 
-	@Override
+    @Override
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    @Override
 	public ContentType getType() {
 		return type;
 	}

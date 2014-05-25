@@ -1,5 +1,15 @@
 package de.deyovi.chat.core.services.impl;
 
+import de.deyovi.chat.core.constants.ChatConstants.ImageSize;
+import de.deyovi.chat.core.services.ThumbGeneratorService;
+import de.deyovi.chat.core.utils.ChatConfiguration;
+import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
+
+import javax.ejb.Stateless;
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Instance;
+import javax.inject.Inject;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -10,17 +20,19 @@ import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
-
-import de.deyovi.chat.core.constants.ChatConstants.ImageSize;
-import de.deyovi.chat.core.services.ThumbGeneratorService;
-import de.deyovi.chat.core.utils.ChatConfiguration;
-
+@Stateless
 public class VideoThumbGeneratorService implements ThumbGeneratorService {
 
 	private final static Logger logger = Logger.getLogger(VideoThumbGeneratorService.class);
-	
+
+
+    private final ImageThumbGeneratorService imageThumbGeneratorService;
+
+    @Inject
+    public VideoThumbGeneratorService(@Any Instance<ThumbGeneratorService> thumbGenerator) {
+        imageThumbGeneratorService = thumbGenerator.select(ImageThumbGeneratorService.class).get();
+    }
+
 	@Override
 	public Map<de.deyovi.chat.core.constants.ChatConstants.ImageSize, String> generate(Object source, String suffix, de.deyovi.chat.core.constants.ChatConstants.ImageSize... imageSizes) {
 		Map<ImageSize, String> result = new HashMap<ImageSize, String>(imageSizes.length);
@@ -101,8 +113,7 @@ public class VideoThumbGeneratorService implements ThumbGeneratorService {
 						Thread.sleep(100);
 						logger.debug("resizing to thumbsize");
 						logger.debug("reading inputstream from " + tmpFile.getAbsolutePath());
-						ImageThumbGeneratorService imageService = new ImageThumbGeneratorService();
-						result = imageService.generate(sourceFile, suffix, imageSizes);
+						result = imageThumbGeneratorService.generate(sourceFile, suffix, imageSizes);
 						if (tmpFile != null) {
 							tmpFile.delete();
 						}

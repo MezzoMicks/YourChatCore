@@ -21,6 +21,9 @@ public interface Segment extends Serializable {
 	 * @return String
 	 */
 	public String getContent();
+
+
+    public void setContent(String content);
 	
 	/**
 	 * Thumbnail for content, if present
@@ -48,7 +51,11 @@ public interface Segment extends Serializable {
 		/**
 		 * The type of content is unknown
 		 */
-		UNKNOWN, 
+		UNKNOWN,
+        /**
+         * The Segment represents a Command (to be further processed)
+         */
+        COMMAND,
 		/**
 		 * normal Text should be marked as this
 		 */

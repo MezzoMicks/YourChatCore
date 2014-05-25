@@ -3,8 +3,13 @@ package de.deyovi.chat.core.dao.impl;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 import javax.transaction.UserTransaction;
 
@@ -15,33 +20,20 @@ import de.deyovi.chat.core.entities.ChatUserEntity;
 import de.deyovi.chat.core.services.EntityService;
 import de.deyovi.chat.core.services.impl.DefaultEntityService;
 
+@Stateless
 public class DefaultChatUserDAO implements ChatUserDAO {
 
 	private static final Logger logger = Logger.getLogger(DefaultChatUserDAO.class);
 
-	private static ChatUserDAO _instance = null;
-	
-	public static ChatUserDAO getInstance() {
-		if (_instance == null) {
-			createInstance();
-		}
-		return _instance;
-	}
-	
-	private static synchronized void createInstance() {
-		if (_instance == null) {
-			_instance = new DefaultChatUserDAO();
-		}
-	}
-	
-	private EntityService entityService = DefaultEntityService.getInstance();
+    @Inject
+	private EntityService entityService;
 	
 	@Override
 	public ChatUserEntity findChatUserByName(String username) {
 		// Query the db for that user
 		logger.debug("Fetching UserEntity by name " + username);
-		EntityManager entityManager = entityService.getFactory().createEntityManager();
-		TypedQuery<ChatUserEntity> query = entityManager.createNamedQuery("findUserByName", ChatUserEntity.class);
+        EntityManager em = entityService.getFactory().createEntityManager();
+		TypedQuery<ChatUserEntity> query = em.createNamedQuery("findUserByName", ChatUserEntity.class);
 		query.setParameter("name", username.toLowerCase());
 		ChatUserEntity userEntity = null;
 		try {
@@ -50,57 +42,52 @@ public class DefaultChatUserDAO implements ChatUserDAO {
 		} catch (NoResultException nrex) {
 			logger.debug("User " + username + " not found in Database");
 		}
-		entityManager.close();
 		return userEntity;
 	}
 	
 	@Override
 	public ChatUserEntity findChatUserById(long id) {
 		logger.debug("Fetching UserEntity by id " + id);
-		EntityManager entityManager = entityService.getFactory().createEntityManager();
 		ChatUserEntity userEntity = null;
 		try {
-			userEntity = entityManager.find(ChatUserEntity.class, id);
+            EntityManager em = entityService.getFactory().createEntityManager();
+			userEntity = em.find(ChatUserEntity.class, id);
 			logger.debug("Found " + userEntity.getId() + " " + userEntity.getName());
 		} catch (NoResultException nrex) {
 			logger.debug("User " + id + " not found in Database");
 		}
-		entityManager.close();
 		return userEntity;
 	}
 	
 	@Override
 	public List<ChatUserEntity> findAll() {
 		logger.debug("Fetching all ChatUsers");
-		EntityManager entityManager = entityService.getFactory().createEntityManager();
-		List<ChatUserEntity> userEntities = findAllWithEntityManager(entityManager);
-		entityManager.close();
+		List<ChatUserEntity> userEntities = findAllWithEntityManager();
 		return userEntities;
 	}
 	
 	@Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
 	public void deleteAll() {
 		logger.debug("Fetching all ChatUsers");
-		EntityManager entityManager = entityService.getFactory().createEntityManager();
+        EntityManager em = entityService.getFactory().createEntityManager();
 		try {
-			UserTransaction transaction = DefaultEntityService.createTransaction();
-			transaction.begin();
-			entityManager.joinTransaction();
-			List<ChatUserEntity> userEntities = findAllWithEntityManager(entityManager);
+            em.joinTransaction();
+			List<ChatUserEntity> userEntities = findAllWithEntityManager();
 			for (ChatUserEntity entity : userEntities) {
-				entityManager.remove(entity);
+                em.remove(entity);
 			}
-			transaction.commit();
 		} catch (Exception e) {
 			logger.error(e);
 		} finally {
-			entityManager.close();
+            em.close();
 		}
 	}
 	
 	
-	private List<ChatUserEntity> findAllWithEntityManager(EntityManager em) {
+	private List<ChatUserEntity> findAllWithEntityManager() {
 		List<ChatUserEntity> userEntities = new LinkedList<ChatUserEntity>();
+        EntityManager em = entityService.getFactory().createEntityManager();
 		try {
 			TypedQuery<ChatUserEntity> query = em.createNamedQuery("findAll", ChatUserEntity.class);
 			userEntities = query.getResultList();

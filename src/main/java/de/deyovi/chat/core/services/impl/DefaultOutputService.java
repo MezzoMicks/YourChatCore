@@ -1,55 +1,36 @@
 package de.deyovi.chat.core.services.impl;
 
-import java.util.List;
-import java.util.Locale;
-
+import de.deyovi.chat.core.constants.ChatConstants;
+import de.deyovi.chat.core.constants.ChatConstants.MessagePreset;
+import de.deyovi.chat.core.objects.*;
+import de.deyovi.chat.core.objects.Room.RoomInfo;
+import de.deyovi.chat.core.objects.impl.CommandSegment;
+import de.deyovi.chat.core.services.*;
+import de.deyovi.chat.core.utils.ChatUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import de.deyovi.chat.core.constants.ChatConstants;
-import de.deyovi.chat.core.constants.ChatConstants.MessagePreset;
-import de.deyovi.chat.core.objects.ChatUser;
-import de.deyovi.chat.core.objects.Image;
-import de.deyovi.chat.core.objects.Message;
-import de.deyovi.chat.core.objects.Profile;
-import de.deyovi.chat.core.objects.Room.RoomInfo;
-import de.deyovi.chat.core.objects.Segment;
-import de.deyovi.chat.core.services.ChatUserService;
-import de.deyovi.chat.core.services.MessageConsumer;
-import de.deyovi.chat.core.services.OutputService;
-import de.deyovi.chat.core.services.RoomService;
-import de.deyovi.chat.core.services.TranslatorService;
-import de.deyovi.chat.core.utils.ChatUtils;
+import javax.ejb.Stateless;
+import javax.inject.Inject;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
 
+@Stateless
 public class DefaultOutputService  implements OutputService {
 
 	private static final Logger logger = LogManager.getLogger(DefaultOutputService.class);
 
-	private final TranslatorService translatorService = ResourceTranslatorService.getInstance();
-	private final RoomService roomServce = DefaultRoomService.getInstance();
-	private final ChatUserService userService = DefaultChatUserService.getInstance();
+    @Inject
+	private TranslatorService translatorService;
+	@Inject
+    private RoomService roomServce;
+    @Inject
+	private ChatUserService userService;
 	
-	private static volatile OutputService instance = null;
-	
-	private DefaultOutputService() {
-		// hidden
-	}
-
-	public static OutputService getInstance() {
-		if (instance == null) {
-			createInstance();
-		}
-		return instance;
-	}
-
-	private static synchronized void createInstance() {
-		if (instance == null) {
-			instance = new DefaultOutputService();
-		}
-	}
-
 	public OutputMeta processMessages(Message[] messages, Locale locale, MessageConsumer consumer) {
 		MyOutputMeta meta = new MyOutputMeta();
 		if (messages == null) {
@@ -68,6 +49,29 @@ public class DefaultOutputService  implements OutputService {
 				}
 				Segment[] segments = msg.getSegments();
 				if (segments != null) {
+                    List<Segment> newSegments = new LinkedList<Segment>();
+                    for (Segment segment : segments) {
+                        if (segment.getType() == Segment.ContentType.TEXT) {
+                            String content = segment.getContent();
+                            if (content.charAt(0) == '$') {
+                                if (content.startsWith("$PROFILE_OPEN")) {
+                                    List<String> parsedMessage = translatorService.parse(content);
+                                    Segment profileCmd = new CommandSegment(msg.getOrigin(), ChatConstants.ChatCommand.PROFILE, parsedMessage.get(1), null, null);
+                                    newSegments.add(profileCmd);
+                                    segment.setContent(translatorService.translate(parsedMessage, locale));
+                                } else {
+                                    segment.setContent(translatorService.translate(content, locale));
+                                }
+                            }
+                        }
+                    }
+                    if (!newSegments.isEmpty()) {
+                        int oldLength = segments.length;
+                        segments = Arrays.copyOf(segments, oldLength + newSegments.size());
+                        for (Segment segment : newSegments) {
+                            segments[oldLength++] = segment;
+                        }
+                    }
 					consumer.consume(segments, locale, meta);
 				}
 			}
@@ -141,7 +145,7 @@ public class DefaultOutputService  implements OutputService {
 		json.put("away", user.isAway());
 		Profile profile = user.getProfile();
 		Image avatar = profile != null ? profile.getAvatar() : null;
-		json.put("avatar", (avatar != null) ? avatar.getID() : null);
+		json.put("avatar", (avatar != null) ? avatar.getId() : null);
 		return json;
 	}
 	

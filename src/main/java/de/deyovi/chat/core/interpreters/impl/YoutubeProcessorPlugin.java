@@ -13,6 +13,9 @@ import de.deyovi.chat.core.objects.Segment.ContentType;
 import de.deyovi.chat.core.objects.impl.ThumbnailedSegment;
 import de.deyovi.chat.core.services.ThumbGeneratorService;
 
+import javax.ejb.Singleton;
+
+@Singleton
 public class YoutubeProcessorPlugin implements InputSegmentInterpreter {
 
 	private final static Logger logger = Logger.getLogger(YoutubeProcessorPlugin.class);

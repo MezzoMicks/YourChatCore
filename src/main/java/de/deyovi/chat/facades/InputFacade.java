@@ -13,6 +13,9 @@ import java.io.InputStream;
  */
 public interface InputFacade {
 
-    public void talk(ChatUser user, String message, InputStream uploadStream, String uploadName);
+    void talk(ChatUser user, String message, InputStream uploadStream, String uploadName);
 
+    void away(ChatUser user, boolean away);
+
+    void join(ChatUser user, String room);
 }

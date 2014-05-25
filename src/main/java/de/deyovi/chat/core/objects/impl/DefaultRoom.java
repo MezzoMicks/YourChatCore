@@ -6,7 +6,8 @@ import de.deyovi.chat.core.objects.Message;
 import de.deyovi.chat.core.objects.Room;
 import de.deyovi.chat.core.objects.Segment;
 import de.deyovi.chat.core.objects.Segment.ContentType;
-import de.deyovi.chat.core.services.impl.DefaultRoomService;
+
+import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import java.io.UnsupportedEncodingException;
@@ -16,8 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class DefaultRoom implements Room {
 
-	private final static Logger logger = Logger.getLogger(DefaultRoom.class);
-	
+	private final static Logger LOGGER = Logger.getLogger(DefaultRoom.class);
 	
 	private final AtomicLong ids;
 	private final TreeSet<ChatUser> users = new TreeSet<ChatUser>();
@@ -26,6 +26,7 @@ public class DefaultRoom implements Room {
 	private final Set<String> bans = new HashSet<String>();
 	private final List<Message> protocol = new LinkedList<Message>();
 	private final DefaultSegment protocolSegment;
+	private final Logger eavesDropper;
 	private String bgImage = null;
 	private boolean open = false;
 	private boolean anonymous = false;
@@ -43,7 +44,7 @@ public class DefaultRoom implements Room {
 				escapedName = URLEncoder.encode(name, "UTF-8");
 			} catch (UnsupportedEncodingException e) {
 				escapedName = name;
-				logger.error(e);
+				LOGGER.error(e);
 			}
 			protocolSegment = new DefaultSegment(name, "data?protocol=" + escapedName, ContentType.PROTOCOL, null, null, null);
 			protocolSegment.setAlternateName("$PROTOCOL{room=" + name + "}");
@@ -51,6 +52,7 @@ public class DefaultRoom implements Room {
 			protocolSegment = null;
 		}
 		ids = new AtomicLong();
+		eavesDropper = LogManager.getLogger("room." + (individual ? "private." : "public.") + name);
 	}
 	
 	public void setAnonymous(boolean anonymous) {
@@ -129,46 +131,6 @@ public class DefaultRoom implements Room {
 	}
 
 	@Override
-	public void leave(ChatUser user) {
-		users.remove(user);
-		if (owner != null) {
-			// if the owner left
-			if (owner.equals(user)) {
-				if (!users.isEmpty()) {
-					// .. pass the ownership on
-					owner = users.first();
-				} else {
-					// or leave it empty and remove the room!
-					owner = null;
-					DefaultRoomService.getInstance().remove(this);
-				}
-			}
-		}
-		user.setCurrentRoom(null);
-		broadcast(new SystemMessage(user, nextId(), MessagePreset.LEFT_CHANNEL, user.getUserName()));
-	}
-
-	@Override
-	public void join(ChatUser user) {
-		Room oldRoom = user.getCurrentRoom();
-		broadcast(new SystemMessage(null, nextId(), MessagePreset.JOIN_CHANNEL, user.getUserName()));
-		// if this isn't the users previous room
-		if (oldRoom != this) {
-			// leave it
-			if (oldRoom != null) {
-				oldRoom.leave(user);
-			}
-			// and set this as his room
-			user.setCurrentRoom(this);
-			users.add(user);
-			user.push(new SystemMessage(null, nextId(), MessagePreset.SWITCH_CHANNEL, getName(), getColor()));
-			if (motd != null) {
-				user.push(motd);
-			}
-		}
-	}
-
-	@Override
 	public boolean isAnonymous() {
 		return anonymous;
 	}
@@ -231,8 +193,8 @@ public class DefaultRoom implements Room {
 		}
 		// build a message consisting of the segments...
 		SystemMessage sm = new SystemMessage(user, nextId(), segments);
-		if (logger.isDebugEnabled()) {
-			logger.debug(name + "> " + (user != null ? user.getUserName() : "null") + ": " + sm.toString());
+		if (LOGGER.isDebugEnabled()) {
+			LOGGER.debug(name + "> " + (user != null ? user.getUserName() : "null") + ": " + sm.toString());
 		}
 		// ..and tell everyone about it :)
 		broadcast(sm);
@@ -290,8 +252,13 @@ public class DefaultRoom implements Room {
 			this.motd = motdMessage;
 		}
 	}
-	
-	@Override
+
+    @Override
+    public Message getMotd() {
+        return motd;
+    }
+
+    @Override
 	public List<Message> getProtocol() {
 		if (protocolSegment != null) {
 			return protocol;

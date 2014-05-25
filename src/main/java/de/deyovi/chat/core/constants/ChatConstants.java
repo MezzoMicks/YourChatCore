@@ -163,7 +163,7 @@ public class ChatConstants {
 	public final static String PROPERTY_INITMODE = "de.deyovi.chat.initmode";
 	
 	public enum ImageSize {
-		ORIGINAL("", -1), PREVIEW("preview_", 280), THUMBNAIL("thumb_", 160), PINKY("pinky_", 64),;
+		ORIGINAL("", -1), PREVIEW("preview", 280), THUMBNAIL("thumb", 160), PINKY("pinky", 64),;
 		
 		private final String prefix;
 		private final int size;
@@ -181,7 +181,7 @@ public class ChatConstants {
 			if (prefix != null) {
 				for (ImageSize value : values()) {
 					if (value != ORIGINAL) {
-						if (value.prefix.startsWith(prefix)) {
+						if (value.prefix.equals(prefix)) {
 							return value;
 						}
 					}

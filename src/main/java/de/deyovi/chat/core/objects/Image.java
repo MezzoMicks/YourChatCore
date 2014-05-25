@@ -2,9 +2,9 @@ package de.deyovi.chat.core.objects;
 
 public interface Image {
 
-	public Long getID();
+	public Long getId();
 	
-	public void setID(Long ID);
+	public void setId(Long ID);
 	
 	public String getTitle();
 	

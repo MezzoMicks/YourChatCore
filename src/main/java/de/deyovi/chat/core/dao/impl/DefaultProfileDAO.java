@@ -5,16 +5,15 @@ import de.deyovi.chat.core.dao.ProfileDAO;
 import de.deyovi.chat.core.entities.ChatUserEntity;
 import de.deyovi.chat.core.entities.ProfileEntity;
 
+import javax.ejb.Stateless;
+import javax.inject.Inject;
+
+@Stateless
 public class DefaultProfileDAO implements ProfileDAO {
 
-	private static final ProfileDAO instance = new DefaultProfileDAO();
-	
-	private final ChatUserDAO chatUserDAO = new DefaultChatUserDAO();
-	
-	public static ProfileDAO getInstance() {
-		return instance;
-	}
-	
+    @Inject
+	private ChatUserDAO chatUserDAO;
+
 	@Override
 	public ProfileEntity findProfileByChatUser(ChatUserEntity chatuser) {
 		return chatuser !=null ? chatuser.getProfile() : null;

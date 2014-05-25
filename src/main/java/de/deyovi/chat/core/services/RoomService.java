@@ -1,23 +1,25 @@
 package de.deyovi.chat.core.services;
 
-import java.util.List;
-
+import de.deyovi.chat.core.objects.ChatUser;
 import de.deyovi.chat.core.objects.Room;
 import de.deyovi.chat.core.objects.Room.RoomInfo;
-import de.deyovi.chat.core.objects.impl.DefaultRoom;
+
+import java.util.List;
 
 public interface RoomService {
 
-	public abstract Room spawn(String name);
+	Room spawn(String name);
 
-	public abstract void remove(DefaultRoom room);
+	void remove(Room room);
 
-	public abstract Room getByName(String name);
+	Room getByName(String name);
 
-	public abstract boolean isMainRoom(String name);
+	boolean isMainRoom(String name);
 
-	public abstract Room getDefault();
+	Room getDefault();
 
-	public abstract List<RoomInfo> getOpenRooms();
+	List<RoomInfo> getOpenRooms();
+
+    void join(Room room, ChatUser user);
 
 }

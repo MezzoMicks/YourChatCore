@@ -12,10 +12,13 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.ejb.Singleton;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+import javax.inject.Inject;
 
+import de.deyovi.chat.core.services.impl.WebsiteThumbGeneratorService;
 import org.apache.log4j.Logger;
 
 import de.deyovi.chat.core.interpreters.InputSegmentInterpreter;
@@ -24,8 +27,9 @@ import de.deyovi.chat.core.objects.Segment.ContentType;
 import de.deyovi.chat.core.objects.impl.DefaultSegment;
 import de.deyovi.chat.core.objects.impl.ThumbnailedSegment;
 import de.deyovi.chat.core.services.impl.ImageThumbGeneratorService;
-import de.deyovi.chat.core.services.impl.WebsiteThumbGeneratorService;
+import de.deyovi.chat.core.services.impl.DefaultWebsiteThumbGeneratorService;
 
+@Singleton
 public class WebsiteProcessorPlugin implements InputSegmentInterpreter {
 
 	private final static Logger logger = Logger.getLogger(WebsiteProcessorPlugin.class);
@@ -33,7 +37,13 @@ public class WebsiteProcessorPlugin implements InputSegmentInterpreter {
 	private final static int MAX_IMAGE_GETTER_ERRORS = 3;
 	private final Pattern titlePattern = Pattern.compile("<title>(.*)</title>", Pattern.CASE_INSENSITIVE);
 	private final Pattern imgPattern = Pattern.compile("<img[^>]*src=\"([^\"]+)\"[^>]*>|background(-image)?:url\\('?(.*?)'?\\).*?;", Pattern.CASE_INSENSITIVE);
-	
+
+    @Inject
+    private WebsiteThumbGeneratorService websiteThumbGeneratorService;
+    @Inject
+    private ImageThumbGeneratorService imageThumbGeneratorService;
+
+
 	@Override
 	public Segment[] interprete(InterpretableSegment segment) {
 		if (!segment.isURL()) {
@@ -147,7 +157,7 @@ public class WebsiteProcessorPlugin implements InputSegmentInterpreter {
 						// then let's try to read that one 
 						image = bigImageReader.read(0);
 						// and create thumbnails for it
-						result[0] = new ThumbnailedSegment(segment.getUser(), title, url.toExternalForm(), de.deyovi.chat.core.objects.Segment.ContentType.WEBSITE, image, new ImageThumbGeneratorService());
+						result[0] = new ThumbnailedSegment(segment.getUser(), title, url.toExternalForm(), de.deyovi.chat.core.objects.Segment.ContentType.WEBSITE, image, imageThumbGeneratorService);
 					} catch (IOException e) {
 						logger.error("Error while reading assumed 'big image'", e);
 					} finally {
@@ -165,7 +175,7 @@ public class WebsiteProcessorPlugin implements InputSegmentInterpreter {
 				// no thumbnail yet
 				if (result[0] == null) {
 					// we will do it the phantom-js-way, screening the webpage
-					result[0] = new ThumbnailedSegment(segment.getUser(), title, url.toExternalForm(), de.deyovi.chat.core.objects.Segment.ContentType.WEBSITE, url, new WebsiteThumbGeneratorService());
+					result[0] = new ThumbnailedSegment(segment.getUser(), title, url.toExternalForm(), de.deyovi.chat.core.objects.Segment.ContentType.WEBSITE, url, websiteThumbGeneratorService);
 				}
 			}
 			return result;

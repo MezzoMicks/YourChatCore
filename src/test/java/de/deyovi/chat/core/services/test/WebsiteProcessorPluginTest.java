@@ -29,7 +29,9 @@ public class WebsiteProcessorPluginTest {
 	public void testGoogle() {
 		ChatConfiguration.initialize();
 		InterpretableSegment seg = new MyInterpretableMockSegment("http://www.google.de");
-		assertNotNull(websiteProcessor.interprete(seg)[0].getPreview());
+		if (ChatConfiguration.getPhantomjs() != null) {
+			assertNotNull(websiteProcessor.interprete(seg)[0].getPreview());
+		}
 	}
 	
 
@@ -54,8 +56,13 @@ public class WebsiteProcessorPluginTest {
 		public String getUser() {
 			return "Anonymous";
 		}
-		
-		@Override
+
+        @Override
+        public void setContent(String content) {
+
+        }
+
+        @Override
 		public ContentType getType() {
 			return null;
 		}

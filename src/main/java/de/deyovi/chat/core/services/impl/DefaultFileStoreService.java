@@ -1,38 +1,29 @@
 package de.deyovi.chat.core.services.impl;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
-import javax.crypto.Cipher;
-import javax.crypto.CipherInputStream;
-import javax.crypto.CipherOutputStream;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-
+import de.deyovi.chat.core.services.FileStoreService;
+import de.deyovi.chat.core.utils.ChatConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
-import de.deyovi.chat.core.services.FileStoreService;
-import de.deyovi.chat.core.utils.ChatConfiguration;
+import javax.annotation.PostConstruct;
+import javax.crypto.*;
+import javax.ejb.Singleton;
+import java.io.*;
 
+@Singleton
 public class DefaultFileStoreService implements FileStoreService {
 	
 	private final static Logger logger = Logger.getLogger(DefaultFileStoreService.class);
 	private final static int BLOCK_SIZE = 16;
-	private static FileStoreService instance = null;
+
+	private File dataDir;
+	private SecretKey secKey;
 	
-	private final File dataDir;
-	private final SecretKey secKey;
-	
-	private final boolean safeMode;
-	
-	private DefaultFileStoreService(boolean safeMode) {
-		this.safeMode = safeMode;
+	private boolean safeMode;
+
+    @PostConstruct
+	private void setUp() {
+		this.safeMode = true;
 		Cipher newEnCipher = null;
 		Cipher newDeCipher = null;
 		SecretKey newSecKey = null;
@@ -55,19 +46,6 @@ public class DefaultFileStoreService implements FileStoreService {
 		}
 		dataDir = new File(ChatConfiguration.getDataDir());
 		secKey = newSecKey;
-	}
-	
-	public static FileStoreService getInstance() {
-		if (instance == null) {
-			createInstance();
-		}
-		return instance;
-	}
-	
-	private static synchronized void createInstance() {
-		if (instance == null) {
-			instance = new DefaultFileStoreService(true);
-		}
 	}
 	
 	/**

@@ -1,14 +1,5 @@
 package de.deyovi.chat.core.services.impl;
 
-import java.awt.Color;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.text.SimpleDateFormat;
-
-import de.deyovi.chat.core.services.CommandInterpreter;
-import org.apache.log4j.Logger;
-
 import de.deyovi.chat.core.constants.ChatConstants.ChatCommand;
 import de.deyovi.chat.core.constants.ChatConstants.MessagePreset;
 import de.deyovi.chat.core.objects.ChatUser;
@@ -18,21 +9,33 @@ import de.deyovi.chat.core.objects.Segment;
 import de.deyovi.chat.core.objects.impl.SystemMessage;
 import de.deyovi.chat.core.objects.impl.TextSegment;
 import de.deyovi.chat.core.services.ChatUserService;
+import de.deyovi.chat.core.services.CommandService;
 import de.deyovi.chat.core.services.InputProcessorService;
 import de.deyovi.chat.core.services.RoomService;
 import de.deyovi.chat.core.utils.ChatUtils;
+import org.apache.log4j.Logger;
 
-public class DefaultCommandInterpreter implements CommandInterpreter {
+import javax.ejb.Stateless;
+import javax.inject.Inject;
+import java.awt.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
 
-	private static final Logger logger = Logger.getLogger(DefaultCommandInterpreter.class);
+@Stateless
+public class DefaultCommandService implements CommandService {
 
-	private final RoomService roomService = DefaultRoomService.getInstance();
-	private final ChatUserService chatUserService = DefaultChatUserService.getInstance();
-    private final InputProcessorService inputProcessorService;
+	private static final Logger logger = Logger.getLogger(DefaultCommandService.class);
 
-    public DefaultCommandInterpreter(InputProcessorService inputProcessorService) {
-        this.inputProcessorService = inputProcessorService;
-    }
+    @Inject
+    private ChatUtils chatUtils;
+    @Inject
+	private RoomService roomService;
+    @Inject
+    private ChatUserService chatUserService;
+    @Inject
+    private InputProcessorService inputProcessorService;
 
 	@Override
 	public boolean process(ChatUser user, ChatCommand cmd, String payload, InputStream uploadStream, String uploadName) {
@@ -145,7 +148,7 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 			if (room != null) {
 				logger.debug(user + " tries to join room " + room.getName());
 				if (room.isVisible() || room.isInvited(user) || room.getOwner().equals(user)) {
-					room.join(user);
+					roomService.join(room, user);
 					user.alive();
 					chatUserService.broadcast(new SystemMessage(null, 0l, MessagePreset.REFRESH));
 				} else {
@@ -156,7 +159,7 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 			}
 		}
 	}
-	
+
 	@Override
 	public void away(ChatUser user, boolean away) {
 		if (chatUserService.isActive(user) && !user.isGuest()) {
@@ -166,9 +169,9 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 			if (room != null) {
 				Message msg;
 				if (user.isAway()) {
-					msg  = new SystemMessage(user, 0, MessagePreset.USER_AWAY, user.getUserName());
+					msg = new SystemMessage(user, 0, MessagePreset.USER_AWAY, user.getUserName());
 				} else {
-					msg  = new SystemMessage(user, 0, MessagePreset.USER_BACK, user.getUserName());
+					msg = new SystemMessage(user, 0, MessagePreset.USER_BACK, user.getUserName());
 				}
 				room.shout(msg);
 				chatUserService.broadcast(new SystemMessage(null, 0l, MessagePreset.REFRESH));
@@ -177,7 +180,8 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 	}
 
 	/**
-	 * A user whispers to a target 
+	 * A user whispers to a target
+	 * 
 	 * @param user
 	 * @param target
 	 * @param message
@@ -195,25 +199,26 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 				logger.info("WHISPER with unactive user '" + target + "' supplied!");
 				user.push(new SystemMessage(null, 0l, MessagePreset.USER_NOT_LOGGED_IN, target));
 			} else {
-				// Perpare the SystemMessage
-				SystemMessage msg4Target = new SystemMessage(user, 0l, MessagePreset.WHISPER, user.getUserName());
+				// Prepare the SystemMessage
+				SystemMessage msg4Target = new SystemMessage(null, 0l, MessagePreset.WHISPER, user.getUserName());
 				SystemMessage msg4Source = new SystemMessage(null, 0l, MessagePreset.WHISPERTO, targetUser.getUserName());
 				// parse the actual content
 				Segment[] msgSegments = inputProcessorService.process(user, message, uploadStream, uploadName);
 				// and append the Segments to the Message
-				msg4Target.append(msgSegments);
 				msg4Source.append(msgSegments);
-				targetUser.push(msg4Target);
+				msg4Target.append(msgSegments);
 				user.push(msg4Source);
+				targetUser.push(msg4Target);
 				if (logger.isDebugEnabled()) {
 					logger.debug("Message[" + message + "] from user[" + user + "] to user[" + targetUser + "]");
 				}
 			}
 		}
 	}
-	
+
 	/**
 	 * Searches for a user
+	 * 
 	 * @param user
 	 * @param wanted
 	 */
@@ -224,9 +229,9 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 				logger.info("SEARCH with unknown user '" + wanted + "' supplied!");
 				user.push(new SystemMessage(null, 0l, MessagePreset.UNKNOWN_USER, wanted));
 			} else if (!chatUserService.isActive(wantedUser)) {
-                SimpleDateFormat sdf_date = new SimpleDateFormat("dd.MM.yyyy");
+				SimpleDateFormat sdf_date = new SimpleDateFormat("dd.MM.yyyy");
 				String date = sdf_date.format(wantedUser.getLastLogin());
-                SimpleDateFormat sdf_time =  new SimpleDateFormat("HH:mm");
+				SimpleDateFormat sdf_time = new SimpleDateFormat("HH:mm");
 				String time = sdf_time.format(wantedUser.getLastLogin());
 				user.push(new SystemMessage(null, 0l, MessagePreset.SEARCH_LAST, wantedUser.getUserName(), date, time));
 			} else {
@@ -244,6 +249,7 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 
 	/**
 	 * Creates a new room with the given color
+	 * 
 	 * @param user
 	 * @param roomName
 	 * @param color
@@ -270,9 +276,10 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 			}
 		}
 	}
-	
+
 	/**
 	 * Invites another user to join the inveters current room
+	 * 
 	 * @param user
 	 * @param invitee
 	 */
@@ -299,9 +306,10 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 			}
 		}
 	}
-	
+
 	/**
 	 * Closes a room
+	 * 
 	 * @param user
 	 * @param roomName
 	 */
@@ -320,9 +328,10 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 			}
 		}
 	}
-	
+
 	/**
 	 * Opens a room
+	 * 
 	 * @param user
 	 * @param roomName
 	 */
@@ -345,9 +354,10 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 			}
 		}
 	}
-	
+
 	/**
 	 * Sets the Message of the Day for a room
+	 * 
 	 * @param user
 	 * @param uploadStream
 	 * @param uploadName
@@ -361,8 +371,8 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 				logger.debug(user + " sets motd for Room '" + userRoom + "' to '" + motd + "'");
 			}
 			if (!motd.isEmpty()) {
-                Segment[] segments = inputProcessorService.process(user, motd, uploadStream, uploadName);
-                userRoom.setMotd(user, segments);
+				Segment[] segments = inputProcessorService.process(user, motd, uploadStream, uploadName);
+				userRoom.setMotd(user, segments);
 			} else {
 				userRoom.setMotd(user, null);
 			}
@@ -373,8 +383,9 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 		}
 	}
 
-	/**
+    /**
 	 * Clears the protocols of a room
+	 * 
 	 * @param user
 	 * @param payload
 	 */
@@ -401,6 +412,7 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 
 	/**
 	 * Opens a user's profile
+	 * 
 	 * @param user
 	 * @param profileUser
 	 */
@@ -416,6 +428,7 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 
 	/**
 	 * Changes a rooms backgrounds
+	 * 
 	 * @param user
 	 * @param payload
 	 * @param uploadStream
@@ -455,7 +468,7 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 					if (newColor != null) {
 						if (newColor.length() == 3) {
 							char[] bytes = newColor.toCharArray();
-							newColor = new String(new char[] { bytes[0], bytes[0], bytes[1], bytes[1], bytes[2], bytes[2]});
+							newColor = new String(new char[] { bytes[0], bytes[0], bytes[1], bytes[1], bytes[2], bytes[2] });
 						}
 						int hex = Integer.parseInt(newColor, 16);
 						int r = (hex & 0xFF0000) >> 16;
@@ -464,9 +477,9 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 						logger.debug("parsed big hex to " + r + " " + g + " " + b);
 						backdrop = new Color(r, g, b);
 					}
-					ChatUtils.makeImageMoreTransparent(uploadStream, bos, backdrop);
+					chatUtils.makeImageMoreTransparent(uploadStream, bos, backdrop);
 					ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
-					String bgImage = "u/" + ChatUtils.createAndStoreResized("bg_", bis, uploadName, 1240, (resize ? 1024 : -1), backdrop);
+					String bgImage = "u/" + chatUtils.createAndStoreResized("bg_", bis, uploadName, 1240, (resize ? 1024 : -1), backdrop);
 					userRoom.setBgImage(bgImage);
 				} catch (Exception e) {
 					logger.error("Error, processing background for user " + user + " file: " + uploadName, e);
@@ -475,7 +488,7 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 			} else if (clear) {
 				userRoom.setBgImage(null);
 			}
-			
+
 			userRoom.shout(new SystemMessage(null, 0, MessagePreset.CHANNEL_BG_CHANGED, user));
 		}
 	}
@@ -492,7 +505,7 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 	private void who(ChatUser user, String whoRoomString) {
 		Room whoRoom;
 		if (!whoRoomString.isEmpty()) {
-			whoRoom	= DefaultRoomService.getInstance().getByName(whoRoomString);
+			whoRoom = roomService.getByName(whoRoomString);
 			if (whoRoom == null) {
 				user.push(new SystemMessage(null, 0, MessagePreset.UNKNOWN_CHANNEL, whoRoomString));
 			}
@@ -523,6 +536,7 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 
 	/**
 	 * Alters a users name, declaring it as 'alias'
+	 * 
 	 * @param user
 	 * @param alias
 	 */
@@ -537,5 +551,5 @@ public class DefaultCommandInterpreter implements CommandInterpreter {
 			userRoom.shout(new SystemMessage(null, 0l, MessagePreset.USER_ALIAS_SET, user.getUserName(), alias));
 		}
 	}
-	
+
 }
