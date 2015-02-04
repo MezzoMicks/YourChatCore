@@ -5,11 +5,9 @@ import de.deyovi.chat.core.services.ThumbGeneratorService;
 import de.deyovi.chat.core.utils.ChatConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import org.springframework.stereotype.Service;
 
-import javax.ejb.Stateless;
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
+import javax.annotation.Resource;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -20,18 +18,13 @@ import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
-@Stateless
+@Service
 public class VideoThumbGeneratorService implements ThumbGeneratorService {
 
 	private final static Logger logger = Logger.getLogger(VideoThumbGeneratorService.class);
 
-
-    private final ImageThumbGeneratorService imageThumbGeneratorService;
-
-    @Inject
-    public VideoThumbGeneratorService(@Any Instance<ThumbGeneratorService> thumbGenerator) {
-        imageThumbGeneratorService = thumbGenerator.select(ImageThumbGeneratorService.class).get();
-    }
+    @Resource
+    private ImageThumbGeneratorService imageThumbGeneratorService;
 
 	@Override
 	public Map<de.deyovi.chat.core.constants.ChatConstants.ImageSize, String> generate(Object source, String suffix, de.deyovi.chat.core.constants.ChatConstants.ImageSize... imageSizes) {

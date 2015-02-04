@@ -4,7 +4,6 @@ import de.deyovi.chat.core.constants.ChatConstants;
 import de.deyovi.chat.core.interpreters.InputSegmentInterpreter;
 import de.deyovi.chat.core.interpreters.InputSegmentInterpreter.InterpretableSegment;
 import de.deyovi.chat.core.interpreters.impl.ImageSegmentInterpreter;
-import de.deyovi.chat.core.interpreters.impl.VideoSegmentInterpreter;
 import de.deyovi.chat.core.interpreters.impl.WebsiteProcessorPlugin;
 import de.deyovi.chat.core.objects.ChatUser;
 import de.deyovi.chat.core.objects.Segment;
@@ -16,25 +15,21 @@ import de.deyovi.chat.core.objects.impl.ThumbnailedSegment;
 import de.deyovi.chat.core.services.FileStoreService;
 import de.deyovi.chat.core.services.InputProcessorService;
 import de.deyovi.chat.core.services.ThumbGeneratorService;
-import de.deyovi.chat.core.utils.ChatConfiguration;
-import de.deyovi.chat.core.utils.ChatUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.stereotype.Service;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.annotation.PostConstruct;
-import javax.ejb.Singleton;
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
+import javax.annotation.Resource;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Constructor;
 import java.net.*;
 import java.util.LinkedList;
 import java.util.List;
@@ -42,7 +37,6 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Singleton
 public class DefaultInputProcessorService implements InputProcessorService {
 
 	private final static Logger logger = LogManager.getLogger(DefaultInputProcessorService.class);
@@ -53,24 +47,12 @@ public class DefaultInputProcessorService implements InputProcessorService {
     private final Pattern pattern = Pattern.compile("([a-z0-9-.]*)\\.([a-z]{2,5})", Pattern.CASE_INSENSITIVE);
 
     private final MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
-    private final TreeMap<Integer, InputSegmentInterpreter> processorMap = new TreeMap<Integer, InputSegmentInterpreter>();
 
-    @Inject
-    private Instance<ThumbGeneratorService> thumbGeneratorServices;
+    private TreeMap<Integer, InputSegmentInterpreter> processorMap;
+    private VideoThumbGeneratorService videoThumbGeneratorService;
+    private ImageThumbGeneratorService imageThumbGeneratorService;
 
-    @PostConstruct
-    public void setup() {
-        mimeTypesMap.addMimeTypes("video/3gp 3gp 3GP");
-        int ix = 0;
-        try {
-            processorMap.put(ix++, (InputSegmentInterpreter) InitialContext.doLookup("java:global/YourChatWeb/ImageSegmentInterpreter"));
-            processorMap.put(ix++, (InputSegmentInterpreter) InitialContext.doLookup("java:global/YourChatWeb/WebsiteProcessorPlugin"));
-        } catch (NamingException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Inject
+    @Resource
 	private FileStoreService fileStoreService;
 	
 	@Override
@@ -207,11 +189,11 @@ public class DefaultInputProcessorService implements InputProcessorService {
 				if (contentType.startsWith("video")) {
 					type = ContentType.VIDEO;
 					// Create Thumbnail
-					thumbGeneratorService = thumbGeneratorServices.select(VideoThumbGeneratorService.class).get();
+					thumbGeneratorService = videoThumbGeneratorService;
 				} else {
 					type = ContentType.IMAGE;
 					// Create Thumbnail
-					thumbGeneratorService = thumbGeneratorServices.select(ImageThumbGeneratorService.class).get();
+					thumbGeneratorService = imageThumbGeneratorService;
 				}
 				result = new ThumbnailedSegment(username, uploadname, "u/" + filename, type, bis, thumbGeneratorService);
 				bis.close();
@@ -281,8 +263,17 @@ public class DefaultInputProcessorService implements InputProcessorService {
 			}
 			return urlConnection;
 		}
-		
-		
 	}
-	
+
+    public void setImageThumbGeneratorService(ImageThumbGeneratorService imageThumbGeneratorService) {
+        this.imageThumbGeneratorService = imageThumbGeneratorService;
+    }
+
+    public void setVideoThumbGeneratorService(VideoThumbGeneratorService videoThumbGeneratorService) {
+        this.videoThumbGeneratorService = videoThumbGeneratorService;
+    }
+
+    public void setProcessorMap(TreeMap<Integer, InputSegmentInterpreter> processorMap) {
+        this.processorMap = processorMap;
+    }
 }

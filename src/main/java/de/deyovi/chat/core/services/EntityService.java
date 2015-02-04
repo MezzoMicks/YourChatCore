@@ -1,5 +1,7 @@
 package de.deyovi.chat.core.services;
 
+import org.springframework.stereotype.Service;
+
 import javax.persistence.EntityManagerFactory;
 
 /**

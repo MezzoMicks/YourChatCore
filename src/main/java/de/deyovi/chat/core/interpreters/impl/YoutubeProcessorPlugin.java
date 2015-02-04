@@ -1,21 +1,19 @@
 package de.deyovi.chat.core.interpreters.impl;
 
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.log4j.Logger;
-
 import de.deyovi.chat.core.constants.ChatConstants.ImageSize;
 import de.deyovi.chat.core.interpreters.InputSegmentInterpreter;
 import de.deyovi.chat.core.objects.Segment;
 import de.deyovi.chat.core.objects.Segment.ContentType;
 import de.deyovi.chat.core.objects.impl.ThumbnailedSegment;
 import de.deyovi.chat.core.services.ThumbGeneratorService;
+import org.apache.log4j.Logger;
+import org.springframework.stereotype.Component;
 
-import javax.ejb.Singleton;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
-@Singleton
+@Component
 public class YoutubeProcessorPlugin implements InputSegmentInterpreter {
 
 	private final static Logger logger = Logger.getLogger(YoutubeProcessorPlugin.class);

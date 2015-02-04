@@ -11,20 +11,20 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.springframework.stereotype.Service;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
-@Stateless
+@Service
 public class JSONMessageConsumer implements MessageConsumer {
 
 	private final static Logger logger = LogManager.getLogger(JSONMessageConsumer.class);
 
-    @Inject
+    @Resource
 	private TranslatorService translatorService;
 	
 	private JSONObject json = null;

@@ -39,12 +39,17 @@ public class HTMLMessageConsumer implements MessageConsumer {
 			"	openProfile('%s');" + //
 			"</script>";
 
+    public static final String MESSAGE_TAG = "<span class=\"message\">"
+            + //
+            "%s" + //
+            "</span>";
+
 	public static final String USER_TAG = "<span class=\"username\" style=\"color:#%s\">"
 			+ //
 			"%s" + //
 			"</span>";
 
-	public static final String USER_ALIAS_TAG = "<span style=\"color:#%s\" data-animation=\"false\" data-title=\"%s\" data-placement=\"right\" onmouseover=\"toolify(this);\" class=\"useralias\">"
+	public static final String USER_ALIAS_TAG = "<span style=\"color:#%s\" data-animation=\"false\" data-title=\"%s\" data-placement=\"right\" onmouseover=\"toolify(this);\" class=\"username useralias\">"
 			+ //
 			"%s" + //
 			"</span>";
@@ -121,7 +126,7 @@ public class HTMLMessageConsumer implements MessageConsumer {
 					name = String.format(USER_TAG, color, name);
 				}
 				target.append(name);
-				target.append(':');
+				target.append(' ');
 			}
 			
 			for (Segment seg : segments) {
@@ -136,7 +141,7 @@ public class HTMLMessageConsumer implements MessageConsumer {
 					content = decorateLink(seg);
 				}
                 if (content != null) {
-                    target.append(content);
+                    target.append(String.format(MESSAGE_TAG, content));
                     target.append(' ');
                 }
 			}

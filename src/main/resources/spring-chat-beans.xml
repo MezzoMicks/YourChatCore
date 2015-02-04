@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!-- CORE/SERVICES -->
+    <alias name="defaultTranslatorService" alias="translatorService" />
+    <bean name="defaultTranslatorService" class="de.deyovi.chat.core.services.impl.ResourceTranslatorService" />
+
+    <alias name="defaultFileStoreService" alias="fileStoreService" />
+    <bean name="defaultFileStoreService" class="de.deyovi.chat.core.services.impl.DefaultFileStoreService" />
+
+    <bean name="chatUtils" class="de.deyovi.chat.core.utils.ChatUtils">
+        <property name="fileStoreService" ref="fileStoreService" />
+    </bean>
+
+    <alias name="defaultChatUserService" alias="chatUserService" />
+    <bean name="defaultChatUserService" class="de.deyovi.chat.core.services.impl.DefaultChatUserService">
+        <property name="profileService" ref="profileService" />
+        <property name="chatUserDAO" ref="chatUserDAO" />
+        <property name="roomService" ref="roomService" />
+    </bean>
+
+    <alias name="defaultCommandService" alias="commandService" />
+    <bean name="defaultCommandService" class="de.deyovi.chat.core.services.impl.DefaultCommandService">
+        <property name="chatUserService" ref="chatUserService" />
+        <property name="chatUtils" ref="chatUtils" />
+        <property name="roomService" ref="roomService" />
+        <property name="inputProcessorService" ref="inputProcessorService" />
+    </bean>
+
+    <bean name="imageThumbGeneratorService" class="de.deyovi.chat.core.services.impl.DefaultImageThumbGeneratorService" />
+    <bean name="videoThumbGeneratorService" class="de.deyovi.chat.core.services.impl.VideoThumbGeneratorService" />
+
+    <alias name="defaultInputProcessorService" alias="inputProcessorService" />
+    <bean name="defaultInputProcessorService" class="de.deyovi.chat.core.services.impl.DefaultInputProcessorService">
+        <property name="imageThumbGeneratorService" ref="imageThumbGeneratorService" />
+        <property name="videoThumbGeneratorService" ref="videoThumbGeneratorService" />
+    </bean>
+
+    <alias name="defaultOutputService" alias="outputService" />
+    <bean name="defaultOutputService" class="de.deyovi.chat.core.services.impl.DefaultOutputService">
+        <property name="translatorService" ref="translatorService" />
+        <property name="roomService" ref="roomService" />
+        <property name="userService" ref="chatUserService" />
+    </bean>
+
+    <alias name="defaultRoomService" alias="roomService" />
+    <bean name="defaultRoomService" class="de.deyovi.chat.core.services.impl.DefaultRoomService" />
+
+    <alias name="defaultProfileService" alias="profileService" />
+    <bean name="defaultProfileService" class="de.deyovi.chat.core.services.impl.DefaultProfileService">
+        <property name="chatUserDAO" ref="chatUserDAO" />
+        <property name="chatUtils" ref="chatUtils" />
+        <property name="imageDAO" ref="imageDAO" />
+        <property name="profileDAO" ref="profileDAO" />
+    </bean>
+
+    <!-- FACADES -->
+
+    <bean name="defaultINputFacade" class="de.deyovi.chat.facades.impl.DefaultInputFacade">
+        <property name="inputService" ref="inputProcessorService" />
+        <property name="commandService" ref="commandService" />
+    </bean>
+
+    <!-- SECURITY -->
+    <alias name="bcryptPasswordEncoder" alias="passwordEncoder" />
+    <bean id="bcryptPasswordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder">
+        <constructor-arg name="strength" value="11" />
+    </bean>
+
+</beans>

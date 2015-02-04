@@ -11,24 +11,19 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Required;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
-@Stateless
 public class DefaultOutputService  implements OutputService {
 
 	private static final Logger logger = LogManager.getLogger(DefaultOutputService.class);
 
-    @Inject
 	private TranslatorService translatorService;
-	@Inject
-    private RoomService roomServce;
-    @Inject
+    private RoomService roomService;
 	private ChatUserService userService;
 	
 	public OutputMeta processMessages(Message[] messages, Locale locale, MessageConsumer consumer) {
@@ -121,7 +116,7 @@ public class DefaultOutputService  implements OutputService {
 			for (ChatUser otherUser : otherUsers) {
 				result.append("others", jsonifyUser(otherUser));
 			}
-			List<RoomInfo> openRooms = roomServce.getOpenRooms();
+			List<RoomInfo> openRooms = roomService.getOpenRooms();
 			for (RoomInfo room : openRooms) {
 				JSONObject jsonRoom = new JSONObject();
 				jsonRoom.put("name", ChatUtils.escape(room.getName()));
@@ -177,5 +172,19 @@ public class DefaultOutputService  implements OutputService {
 		}
 
 	}
-	
+
+    @Required
+    public void setTranslatorService(TranslatorService translatorService) {
+        this.translatorService = translatorService;
+    }
+
+    @Required
+    public void setRoomService(RoomService roomService) {
+        this.roomService = roomService;
+    }
+
+    @Required
+    public void setUserService(ChatUserService userService) {
+        this.userService = userService;
+    }
 }

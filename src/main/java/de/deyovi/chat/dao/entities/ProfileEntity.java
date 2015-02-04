@@ -1,9 +1,8 @@
-package de.deyovi.chat.core.entities;
-
-import java.sql.Date;
-import java.util.Collection;
+package de.deyovi.chat.dao.entities;
 
 import javax.persistence.*;
+import java.sql.Date;
+import java.util.Collection;
 
 @Entity
 @Table(name = "profile")

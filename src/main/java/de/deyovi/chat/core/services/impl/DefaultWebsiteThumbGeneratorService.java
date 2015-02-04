@@ -1,28 +1,27 @@
 package de.deyovi.chat.core.services.impl;
 
 import de.deyovi.chat.core.constants.ChatConstants.ImageSize;
-import de.deyovi.chat.core.services.ThumbGeneratorService;
 import de.deyovi.chat.core.utils.ChatConfiguration;
 import de.deyovi.chat.core.utils.ChatUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import org.springframework.stereotype.Service;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import javax.annotation.Resource;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
-@Stateless
+@Service
 public class DefaultWebsiteThumbGeneratorService implements WebsiteThumbGeneratorService {
 	
 	private final static Logger logger = Logger.getLogger(DefaultWebsiteThumbGeneratorService.class);
 
 	private static final String BIGIMAGE_PREFIX = "bigimage: ";
 
-    @Inject
+    @Resource
     private ChatUtils chatUtils;
 
 	@Override

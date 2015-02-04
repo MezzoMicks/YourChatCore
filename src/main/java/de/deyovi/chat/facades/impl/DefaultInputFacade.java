@@ -8,9 +8,10 @@ import de.deyovi.chat.core.services.InputProcessorService;
 import de.deyovi.chat.facades.InputFacade;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Required;
+import org.springframework.stereotype.Service;
 
-import javax.ejb.Singleton;
-import javax.inject.Inject;
+import javax.annotation.Resource;
 import java.io.InputStream;
 
 /**
@@ -20,14 +21,11 @@ import java.io.InputStream;
  * Time: 15:45
  * To change this template use File | Settings | File Templates.
  */
-@Singleton
 public class DefaultInputFacade implements InputFacade {
 
     private static final Logger logger = LogManager.getLogger(DefaultInputFacade.class);
 
-    @Inject
     private InputProcessorService inputService;
-    @Inject
     private CommandService commandService;
 
 
@@ -55,5 +53,15 @@ public class DefaultInputFacade implements InputFacade {
     @Override
     public void join(ChatUser user, String room) {
         commandService.join(user, room);
+    }
+
+    @Required
+    public void setInputService(InputProcessorService inputService) {
+        this.inputService = inputService;
+    }
+
+    @Required
+    public void setCommandService(CommandService commandService) {
+        this.commandService = commandService;
     }
 }

@@ -1,7 +1,5 @@
 package de.deyovi.chat.facades.impl;
 
-import org.apache.log4j.Logger;
-
 import de.deyovi.aide.Notice.Level;
 import de.deyovi.aide.Outcome;
 import de.deyovi.aide.impl.DefaultOutcome;
@@ -10,21 +8,21 @@ import de.deyovi.chat.core.objects.Alert.Lifespan;
 import de.deyovi.chat.core.objects.ChatUser;
 import de.deyovi.chat.core.objects.impl.DefaultAlert;
 import de.deyovi.chat.core.services.ChatUserService;
-import de.deyovi.chat.core.services.impl.DefaultChatUserService;
 import de.deyovi.chat.core.utils.PasswordUtil;
 import de.deyovi.chat.facades.SessionFacade;
+import org.apache.log4j.Logger;
+import org.springframework.stereotype.Service;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import javax.annotation.Resource;
 
-@Stateless
+@Service
 public class DefaultSessionFacade implements SessionFacade {
 
 	private final static Logger logger = Logger.getLogger(DefaultSessionFacade.class);
 	
 	private static volatile DefaultSessionFacade instance = null;
 
-    @Inject
+    @Resource
 	private ChatUserService chatUserService;
 	
 	@Override
@@ -33,7 +31,7 @@ public class DefaultSessionFacade implements SessionFacade {
 		sugar = sugarCheck(username, sugar);
 		if (sugar != null) {
 			logger.debug("login -> extracted sugar :" + sugar);
-			return chatUserService.login(username, password, sugar);
+			return chatUserService.login(username, password);
 		} else {
 			Alert error = new DefaultAlert("alert.authentication.internal", Level.ERROR, Lifespan.NORMAL);
 			return new DefaultOutcome<ChatUser>(null, error);
@@ -45,7 +43,7 @@ public class DefaultSessionFacade implements SessionFacade {
 		logger.debug("register -> user:" + username + " pass: " + password + " sugar: " + sugar);
 		sugar = sugarCheck(username, sugar);
 		if (sugar != null) {
-			return chatUserService.register(username, password, inviteKey, sugar);
+			return chatUserService.register(username, password, inviteKey);
 		} else {
 			Alert error = new DefaultAlert("alert.authentication.internal", Level.ERROR, Lifespan.NORMAL);
 			return new DefaultOutcome<ChatUser>(null, error);

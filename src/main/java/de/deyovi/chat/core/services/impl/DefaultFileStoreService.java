@@ -4,13 +4,12 @@ import de.deyovi.chat.core.services.FileStoreService;
 import de.deyovi.chat.core.utils.ChatConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.crypto.*;
-import javax.ejb.Singleton;
 import java.io.*;
 
-@Singleton
 public class DefaultFileStoreService implements FileStoreService {
 	
 	private final static Logger logger = Logger.getLogger(DefaultFileStoreService.class);
@@ -21,8 +20,7 @@ public class DefaultFileStoreService implements FileStoreService {
 	
 	private boolean safeMode;
 
-    @PostConstruct
-	private void setUp() {
+	public DefaultFileStoreService() {
 		this.safeMode = true;
 		Cipher newEnCipher = null;
 		Cipher newDeCipher = null;

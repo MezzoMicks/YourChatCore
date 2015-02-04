@@ -9,15 +9,15 @@ import de.deyovi.chat.core.objects.impl.SystemMessage;
 import de.deyovi.chat.core.services.RoomService;
 import de.deyovi.chat.core.utils.ChatConfiguration;
 import org.apache.log4j.Logger;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import javax.ejb.Singleton;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
 
-@Singleton
+@Service
 public class DefaultRoomService implements RoomService {
 
 	private final static Logger logger = Logger.getLogger(DefaultRoomService.class);

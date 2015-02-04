@@ -1,11 +1,11 @@
 package de.deyovi.chat.core.utils;
 
+import org.apache.log4j.Logger;
+
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Random;
-
-import org.apache.log4j.Logger;
 
 public class PasswordUtil {
 

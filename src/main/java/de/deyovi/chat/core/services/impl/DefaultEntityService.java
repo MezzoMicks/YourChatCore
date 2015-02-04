@@ -2,27 +2,22 @@ package de.deyovi.chat.core.services.impl;
 
 import de.deyovi.chat.core.services.EntityService;
 import org.apache.log4j.Logger;
+import org.springframework.stereotype.Service;
 
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceUnit;
-import javax.swing.text.html.parser.Entity;
-import javax.transaction.UserTransaction;
 import javax.xml.ws.Action;
 
-@Stateless
+@Service
 public class DefaultEntityService implements EntityService {
 
 	private final static Logger logger = Logger.getLogger(DefaultEntityService.class);
 
 	private volatile static EntityService _instance = null;
 	private volatile Boolean initialized = null;
-    @PersistenceUnit(unitName = "YourChatWeb")
+    @PersistenceUnit
     private EntityManagerFactory emf;
     @PersistenceContext
     private EntityManager entityManager;
@@ -55,12 +50,12 @@ public class DefaultEntityService implements EntityService {
         } else {
             entityManager.merge(entity);
         }
+        entityManager.flush();
 	}
 	
 	/* (non-Javadoc)
 	 * @see de.deyovi.chat.core.service.impl.EntityService#remove(javax.persistence.EntityManager, java.lang.Object)
 	 */
-    @TransactionAttribute(TransactionAttributeType.REQUIRED)
 	public void remove(Object entity) {
 		EntityManager em = emf.createEntityManager();
 		try {

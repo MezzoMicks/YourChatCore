@@ -14,27 +14,23 @@ import de.deyovi.chat.core.services.InputProcessorService;
 import de.deyovi.chat.core.services.RoomService;
 import de.deyovi.chat.core.utils.ChatUtils;
 import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Required;
+import org.springframework.stereotype.Service;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import javax.annotation.Resource;
 import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 
-@Stateless
 public class DefaultCommandService implements CommandService {
 
 	private static final Logger logger = Logger.getLogger(DefaultCommandService.class);
 
-    @Inject
     private ChatUtils chatUtils;
-    @Inject
 	private RoomService roomService;
-    @Inject
     private ChatUserService chatUserService;
-    @Inject
     private InputProcessorService inputProcessorService;
 
 	@Override
@@ -552,4 +548,23 @@ public class DefaultCommandService implements CommandService {
 		}
 	}
 
+    @Required
+    public void setRoomService(RoomService roomService) {
+        this.roomService = roomService;
+    }
+
+    @Required
+    public void setChatUserService(ChatUserService chatUserService) {
+        this.chatUserService = chatUserService;
+    }
+
+    @Required
+    public void setChatUtils(ChatUtils chatUtils) {
+        this.chatUtils = chatUtils;
+    }
+
+    @Required
+    public void setInputProcessorService(InputProcessorService inputProcessorService) {
+        this.inputProcessorService = inputProcessorService;
+    }
 }

@@ -1,9 +1,13 @@
 package de.deyovi.chat.core.constants;
 
 
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 public class ChatConstants {
-	
+
+    public final static GrantedAuthority AUTHORITY_USER = new SimpleGrantedAuthority("USER");
+    public final static GrantedAuthority AUTHORITY_ADMIN = new SimpleGrantedAuthority("ADMIN");
 
 	public final static int MESSAGE_EVENT_NONE = 0;
 	public final static int MESSAGE_EVENT_STOP = 1;

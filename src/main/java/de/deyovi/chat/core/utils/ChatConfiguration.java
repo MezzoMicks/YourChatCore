@@ -1,16 +1,11 @@
 package de.deyovi.chat.core.utils;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.MissingResourceException;
-import java.util.PropertyResourceBundle;
-import java.util.ResourceBundle;
-
+import de.deyovi.chat.core.constants.ChatConstants;
 import org.apache.log4j.Logger;
 
-import de.deyovi.chat.core.constants.ChatConstants;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 public class ChatConfiguration {
 
@@ -40,6 +35,7 @@ public class ChatConfiguration {
 	private boolean initmode = false;
 
 	public ChatConfiguration() {
+        logger.info("INITIALIZING APPLICATION");
 		try {
 			defaultDataDir = File.createTempFile("yourchat", "tmp").getParent();
 		} catch (IOException e) {

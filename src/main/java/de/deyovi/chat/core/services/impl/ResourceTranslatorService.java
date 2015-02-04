@@ -4,12 +4,12 @@ import de.deyovi.chat.core.services.TranslatorService;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.springframework.stereotype.Service;
 
-import javax.ejb.Singleton;
 import java.text.MessageFormat;
 import java.util.*;
 
-@Singleton
+@Service
 public class ResourceTranslatorService implements TranslatorService {
 
 	private final static Logger logger = LogManager.getLogger(ResourceTranslatorService.class);

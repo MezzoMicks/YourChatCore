@@ -1,24 +1,18 @@
 package de.deyovi.chat.core.interpreters.impl;
 
-import java.net.URL;
-import java.net.URLConnection;
-
-import de.deyovi.chat.core.services.ThumbGeneratorService;
-import org.apache.log4j.Logger;
-
 import de.deyovi.chat.core.interpreters.InputSegmentInterpreter;
 import de.deyovi.chat.core.objects.Segment;
 import de.deyovi.chat.core.objects.Segment.ContentType;
 import de.deyovi.chat.core.objects.impl.ThumbnailedSegment;
 import de.deyovi.chat.core.services.impl.ImageThumbGeneratorService;
+import org.apache.log4j.Logger;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import javax.ejb.Singleton;
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
+import java.net.URL;
+import java.net.URLConnection;
 
-@Singleton
+@Component
 public class ImageSegmentInterpreter implements InputSegmentInterpreter {
 
 	private final static Logger logger = Logger.getLogger(ImageSegmentInterpreter.class);
@@ -27,7 +21,7 @@ public class ImageSegmentInterpreter implements InputSegmentInterpreter {
 			"jpg", "jpeg", "png", "gif", "tif", "tiff", "bmp"
 	};
 
-    @Inject
+    @Resource
     private ImageThumbGeneratorService thumbGeneratorService;
 	
 	@Override

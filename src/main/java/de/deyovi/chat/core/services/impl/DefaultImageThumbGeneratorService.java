@@ -1,13 +1,12 @@
 package de.deyovi.chat.core.services.impl;
 
 import de.deyovi.chat.core.constants.ChatConstants;
-import de.deyovi.chat.core.interpreters.impl.ImageSegmentInterpreter;
 import de.deyovi.chat.core.utils.ChatUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import org.springframework.stereotype.Service;
 
-import javax.ejb.Singleton;
-import javax.inject.Inject;
+import javax.annotation.Resource;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.URL;
@@ -19,12 +18,12 @@ import java.util.Map;
 /**
  * Created by michi on 25.05.14.
  */
-@Singleton
+@Service
 public class DefaultImageThumbGeneratorService implements ImageThumbGeneratorService {
 
     private final static Logger logger = Logger.getLogger(ImageThumbGeneratorService.class);
 
-    @Inject
+    @Resource
     private ChatUtils chatUtils;
 
     @Override

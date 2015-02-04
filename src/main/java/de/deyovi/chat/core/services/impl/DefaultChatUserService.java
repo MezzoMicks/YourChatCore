@@ -4,9 +4,10 @@ import de.deyovi.aide.Notice;
 import de.deyovi.aide.Notice.Level;
 import de.deyovi.aide.Outcome;
 import de.deyovi.aide.impl.DefaultOutcome;
+import de.deyovi.chat.core.constants.ChatConstants;
 import de.deyovi.chat.core.constants.ChatConstants.MessagePreset;
-import de.deyovi.chat.core.dao.ChatUserDAO;
-import de.deyovi.chat.core.entities.ChatUserEntity;
+import de.deyovi.chat.dao.ChatUserDAO;
+import de.deyovi.chat.dao.entities.ChatUserEntity;
 import de.deyovi.chat.core.objects.Alert.Lifespan;
 import de.deyovi.chat.core.objects.ChatUser;
 import de.deyovi.chat.core.objects.Message;
@@ -16,16 +17,19 @@ import de.deyovi.chat.core.objects.impl.DefaultChatUser;
 import de.deyovi.chat.core.objects.impl.DefaultChatUserSettings;
 import de.deyovi.chat.core.objects.impl.SystemMessage;
 import de.deyovi.chat.core.services.ChatUserService;
-import de.deyovi.chat.core.services.EntityService;
 import de.deyovi.chat.core.services.ProfileService;
 import de.deyovi.chat.core.services.RoomService;
 import de.deyovi.chat.core.utils.ChatConfiguration;
 import de.deyovi.chat.core.utils.PasswordUtil;
 import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Required;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import javax.annotation.PostConstruct;
-import javax.ejb.Singleton;
-import javax.inject.Inject;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -35,8 +39,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Michi
  *
  */
-@Singleton
-public class DefaultChatUserService implements ChatUserService {
+public class DefaultChatUserService implements ChatUserService, UserDetailsService {
 
 	private final static Logger logger = Logger.getLogger(DefaultChatUserService.class);
 
@@ -45,20 +48,15 @@ public class DefaultChatUserService implements ChatUserService {
 	private final static long TIMEOUT = MINUTE * 60;
 	private final static long AWAY_TIMEOUT = 6 * TIMEOUT;
 
-    private final Map<String, ChatUser> sessions2users = new HashMap<String, ChatUser>();
     private final Map<String, ChatUser> names2users = new TreeMap<String, ChatUser>();
     private final Map<String, ChatInvitation> invitations = new HashMap<String, ChatInvitation>();
 
 	private Room defaultRoom;
 
 	private final AtomicLong ids = new AtomicLong(System.currentTimeMillis());
-    @Inject
-	private ChatUserDAO chatUserDAO;
-    @Inject
-	private EntityService entityService;
-	@Inject
+
+    private ChatUserDAO chatUserDAO;
     private ProfileService profileService;
-    @Inject
     private RoomService roomService;
 
     @PostConstruct
@@ -68,25 +66,6 @@ public class DefaultChatUserService implements ChatUserService {
         defaultRoom = roomService.getDefault();
     }
 	
-	public Outcome<ChatUser> login(String username, String pwHash, String sugar) {
-		logger.info("User " + username + " tries to login");
-		ChatUser result = validatePassword(username, pwHash, sugar);
-		Notice error = null;
-		if (result == null) {
-			error = new DefaultAlert("alert.login.wrongcredentials", Level.ERROR, Lifespan.NORMAL);
-			logger.info("User[" + username + "] tried to login, invalid Username or Password supplied!");
-		} else {
-			roomService.join(defaultRoom, result);
-			logger.info(username + " logged in");
-		}
-		return new DefaultOutcome<ChatUser>(result, error);
-	}
-	
-	@Override
-	public ChatUser getBySessionId(String sessionId) {
-		return sessions2users.get(sessionId);
-	}
-	
 	/**
 	 * Registers a user permanently at the system
 	 * 
@@ -94,11 +73,10 @@ public class DefaultChatUserService implements ChatUserService {
 	 * @param password
 	 * @param invitationKey
 	 *            (needed if invitation is required)
-	 * @param sugar
 	 *            (needed if invitationKey is hashed!)
 	 * @return boolean
 	 */
-	public Outcome<ChatUser> register(String username, String password, String invitationKey, String sugar) {
+	public Outcome<ChatUser> register(String username, String password, String invitationKey) {
 		boolean ok = false;
 		username = username != null ? username.trim() : null;
 		Notice error = null;
@@ -107,12 +85,12 @@ public class DefaultChatUserService implements ChatUserService {
 			error = new DefaultAlert("alert.register.nametooshort", Level.ERROR, Lifespan.NORMAL);
 			logger.info(username + "'s registration rejected, username : '"	+ (username) + "' must be at least 4 chars");
 		// or is it already given?
-		} else if (chatUserDAO.findChatUserByName(username) != null) {
+		} else if (chatUserDAO.findByName(username) != null) {
 			error = new DefaultAlert("alert.register.namegiven", Level.ERROR, Lifespan.NORMAL);
 			logger.info(username + "'s registration rejected, username '" + username + "' already given");
 		// no problem then check if there's an invitation needed and available
 		} else if (ChatConfiguration.isInvitationRequired()) {
-			ChatInvitation invitation = getInvitation(username, invitationKey, sugar, false);
+			ChatInvitation invitation = getInvitation(username, invitationKey);
 			if (invitation != null && !invitation.isTrial()) {
 				ok = true;
 			} else {
@@ -129,7 +107,7 @@ public class DefaultChatUserService implements ChatUserService {
 			ChatUserEntity newUser = new ChatUserEntity();
 			newUser.setName(username);
 			newUser.setPassword(password);
-			entityService.persistOrMerge(newUser, true);
+			chatUserDAO.save(newUser);
 			return new DefaultOutcome<ChatUser>(convert(newUser));
 		} else {
 			return new DefaultOutcome<ChatUser>(null, error);
@@ -142,7 +120,6 @@ public class DefaultChatUserService implements ChatUserService {
 	}
 	
 	private void _logout(ChatUser user) {
-		sessions2users.remove(user.getSessionId());
 		String lcUserName = user.getUserName().trim().toLowerCase();
 		names2users.remove(lcUserName);
 		Room room = user.getCurrentRoom();
@@ -154,11 +131,11 @@ public class DefaultChatUserService implements ChatUserService {
 
 	@Override
 	public boolean isActive(ChatUser user) {
-		return sessions2users.containsValue(user);
+		return names2users.containsValue(user);
 	}
 	
 	public ChatUser getByName(String name) {
-		ChatUserEntity userEntity = chatUserDAO.findChatUserByName(name);
+		ChatUserEntity userEntity = chatUserDAO.findByName(name);
 		if (userEntity != null) {
 			return convert(userEntity);
 		} else {
@@ -176,58 +153,8 @@ public class DefaultChatUserService implements ChatUserService {
 		return sessionId;
 	}
 
-	private ChatUser validatePassword(String username, String pwhash, String sugar) {
-		ChatUser result = null;
-		ChatUserEntity userEntity = chatUserDAO.findChatUserByName(username);
-		// Is it a persisted user?
-		if (userEntity != null) {
-			// then let's hash and check the password
-			String tmpHash = userEntity.getPassword();
-			if (sugar != null) {
-				tmpHash = PasswordUtil.encrypt(userEntity.getPassword(), sugar);
-			}
-			if (tmpHash.equals(pwhash)) {
-				result = convert(userEntity);
-				if (isActive(result)) {
-					userEntity.setLastlogin(new Timestamp(System.currentTimeMillis()));
-					logger.info("User[" + username + "] is now logged in");
-					entityService.persistOrMerge(userEntity, false);
-				} else {
-					// update the listener time and 'alive' them
-					result.setListenerTime(System.currentTimeMillis());
-					result.alive();
-					logger.info("User[" + username + "]'s is now 'alived' due to login-attempt");
-				}
-			}
-		} else {
-			logger.info("The user doesn't seem to be a persistent user, let's check the invitations");
-			ChatInvitation invitation = getInvitation(username, pwhash, sugar, true);
-			if (invitation != null) {
-				// maybe the user is already logged in
-				result = invitation.getInvitee();
-				if (result == null) {
-					if ((System.currentTimeMillis() - invitation.getCreation()) < A_DAY_IN_MILLIS) {
-						logger.info("Creating temporary User-Object for invitee " + username);
-						result = createLocalUser(null, username);
-						invitation.setInvitee(result);
-					} else {
-						invitations.remove(invitation.getKey());
-						logger.info("Invitation with key " + invitation.getKey() + " from  " + invitation.getInviter().getUserName() + " expired!" + " Invitee: " + username + " won't get in!");
-					}
-				} else {
-					logger.info(username + " reused their invitation");
-					// update the listener time and 'alive' them
-					result.setListenerTime(System.currentTimeMillis());
-					result.alive();
-					logger.info("User[" + username + "]'s is now 'alived' due to login-attempt");
-				}
-			}
-		}
-		return result;
-	}
-
 	public void update(ChatUser user, String color, String font, String room, boolean asyncmode) {
-		ChatUserEntity userEntity = chatUserDAO.findChatUserByName(user.getUserName());
+		ChatUserEntity userEntity = chatUserDAO.findByName(user.getUserName());
 		if (userEntity != null) {
 			if (isFontOk(font)) {
 				userEntity.setFont(font);
@@ -243,7 +170,7 @@ public class DefaultChatUserService implements ChatUserService {
 			}
 			userEntity.setAsyncmode(asyncmode);
 			user.getSettings().setAsyncmode(asyncmode);
-			entityService.persistOrMerge(userEntity, false);
+			chatUserDAO.save(userEntity);
 		} else {
 			if (isFontOk(font)) {
 				user.getSettings().setFont(font);
@@ -270,9 +197,14 @@ public class DefaultChatUserService implements ChatUserService {
 		invitations.put(key, new ChatInvitation(trial, user, key));
 		return key;
 	}
-	
-	public void changePassword(ChatUser user, String passwordHash) {
-		ChatUserEntity userEntity = chatUserDAO.findChatUserById(user.getId());
+
+    @Override
+    public Outcome<ChatUser> login(String username, String password) {
+        return null;
+    }
+
+    public void changePassword(ChatUser user, String passwordHash) {
+		ChatUserEntity userEntity = chatUserDAO.findOne(user.getId());
 		userEntity.setPassword(passwordHash);
 	}
 	
@@ -296,25 +228,17 @@ public class DefaultChatUserService implements ChatUserService {
 		ChatUser result;
 		String sessionId = getSessionID();
 		result = new DefaultChatUser(id, username, sessionId, id == null);
-		sessions2users.put(sessionId, result);
 		names2users.put(username.toLowerCase(), result);
 		result.setListenerTime(System.currentTimeMillis());
 		result.setSettings(new DefaultChatUserSettings());
 		return result;
 	}
 
-	private ChatInvitation getInvitation(String username, String keyHash, String sugar, boolean asLogin) {
+	private ChatInvitation getInvitation(String username, String key) {
 		ChatInvitation invitation = null;
 		for (String tmpKey : invitations.keySet()) {
-			String tmpHash;
-			if (asLogin) {
-				tmpHash = PasswordUtil.encrypt(tmpKey, null);
-			} else {
-				tmpHash = tmpKey;
-			}
-			tmpHash = PasswordUtil.encrypt(tmpHash, sugar);
-			logger.debug("[" + tmpKey +"]" + tmpHash + " versus " + keyHash);
-			if (tmpHash.equals(keyHash)) {
+			logger.debug("[" + tmpKey +"] versus " + key);
+			if (tmpKey.equals(key)) {
 				invitation = invitations.get(tmpKey);
 				logger.info("Invitation found for key " + tmpKey);
 				if (invitation.getInvitee() != null && !username.equals(invitation.getInvitee().getUserName())) {
@@ -374,8 +298,30 @@ public class DefaultChatUserService implements ChatUserService {
 		}
 		return result;
 	}
-	
-	/**
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        ChatUserEntity chatUserEntity = chatUserDAO.findByNameIgnoreCase(username);
+        if (chatUserEntity != null) {
+            String name = chatUserEntity.getName();
+            String password = chatUserEntity.getPassword();
+            boolean enabled = true;
+            boolean accountNonExpired = true;
+            boolean credentialsNonExpired = true;
+            boolean accountNonLocked = true;
+            List<GrantedAuthority> authorities = new LinkedList<GrantedAuthority>();
+            authorities.add(ChatConstants.AUTHORITY_USER);
+            if (chatUserEntity.isTrusted()) {
+                authorities.add(ChatConstants.AUTHORITY_ADMIN);
+            }
+            User springUser = new User(name, password, enabled, accountNonExpired, credentialsNonExpired, accountNonLocked, authorities);
+            return springUser;
+        } else {
+            return null;
+        }
+    }
+
+    /**
 	 * An invitation to the chat
 	 * @author Michi
 	 *
@@ -497,5 +443,19 @@ public class DefaultChatUserService implements ChatUserService {
 		}
 		
 	}
-	
+
+    @Required
+    public void setChatUserDAO(ChatUserDAO chatUserDAO) {
+        this.chatUserDAO = chatUserDAO;
+    }
+
+    @Required
+    public void setProfileService(ProfileService profileService) {
+        this.profileService = profileService;
+    }
+
+    @Required
+    public void setRoomService(RoomService roomService) {
+        this.roomService = roomService;
+    }
 }

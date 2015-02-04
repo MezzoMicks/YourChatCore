@@ -1,51 +1,37 @@
 package de.deyovi.chat.core.utils;
 
-import java.awt.AlphaComposite;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.Modifier;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
+import de.deyovi.chat.core.services.FileStoreService;
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.log4j.Logger;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Required;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
-import javax.ejb.Singleton;
+import javax.annotation.Resource;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.util.*;
+import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
-import de.deyovi.chat.core.services.FileStoreService;
-import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.log4j.Logger;
-
-import javax.ejb.Stateless;
-import javax.inject.Inject;
-import javax.naming.InitialContext;
-
-@Stateless
-public class ChatUtils {
+public class ChatUtils implements ApplicationContextAware {
 
 	private final static Logger logger = Logger.getLogger(ChatUtils.class);
 
-    @Inject
     private FileStoreService fileStoreService;
+    private ApplicationContext applicationContext;
 
 	public String createAndStoreResized(String prefix, InputStream stream, String filename, int width, int height,
 			Color backdrop) throws IOException {
@@ -334,39 +320,8 @@ public class ChatUtils {
 		}
 	}
 
-    public static <T> List<T> getBeansForType(Class<T> type) {
-        List<Class> assignableClasses = new LinkedList<Class>();
-        List<String> classes = ChatUtils.getClassNamesFromPackage("de.deyovi.chat", true);
-        for (String className : classes) {
-            try {
-                Class<?> clazz = Class.forName(className);
-                if ((clazz.getModifiers() & Modifier.ABSTRACT) == 0 && (clazz.getModifiers() & Modifier.INTERFACE) == 0 ) {
-                    if (type.isAssignableFrom(clazz)) {
-                        assignableClasses.add(clazz);
-                    }
-                }
-            } catch (ClassNotFoundException e) {
-                logger.error("Error while scanning Controllers", e);
-            }
-        }
-        List<T> beans = new LinkedList<T>();
-        for (Class clazz : assignableClasses) {
-            try {
-                T bean;
-                if (clazz.getAnnotationsByType(Singleton.class).length > 0 || clazz.getAnnotationsByType(Stateless.class).length > 0) {
-                    logger.info("Lookup for Bean:" + clazz.getName());
-
-                    bean = InitialContext.doLookup("java:global/YourChatWeb/" + clazz.getSimpleName());
-                } else {
-                    logger.info("Instantiating Bean:" + clazz.getName());
-                    bean = (T) clazz.getConstructors()[0].newInstance();
-                }
-                beans.add(bean);
-            } catch (Exception e) {
-                logger.error("Error while instantiating Bean:" + clazz.getName(), e);
-            }
-        }
-        return beans;
+    public <T> Collection<T> getBeansForType(Class<T> type, String context) {
+        return applicationContext.getBeansOfType(type).values();
     }
 
 	public static List<String> getClassNamesFromPackage(String packageName, boolean recurse) {
@@ -422,4 +377,13 @@ public class ChatUtils {
 		return names;
 	}
 
+    @Required
+    public void setFileStoreService(FileStoreService fileStoreService) {
+        this.fileStoreService = fileStoreService;
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
+    }
 }

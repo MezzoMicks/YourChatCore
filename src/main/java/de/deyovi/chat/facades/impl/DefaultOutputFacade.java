@@ -1,14 +1,5 @@
 package de.deyovi.chat.facades.impl;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-
-import de.deyovi.chat.core.services.RoomService;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
-import org.json.JSONObject;
-
 import de.deyovi.chat.core.constants.ChatConstants.MessagePreset;
 import de.deyovi.chat.core.objects.ChatUser;
 import de.deyovi.chat.core.objects.Message;
@@ -16,20 +7,26 @@ import de.deyovi.chat.core.objects.impl.SystemMessage;
 import de.deyovi.chat.core.services.MessageConsumer;
 import de.deyovi.chat.core.services.OutputService;
 import de.deyovi.chat.core.services.OutputService.OutputMeta;
-import de.deyovi.chat.core.services.impl.DefaultOutputService;
+import de.deyovi.chat.core.services.RoomService;
 import de.deyovi.chat.facades.OutputFacade;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.json.JSONObject;
+import org.springframework.stereotype.Service;
 
-import javax.ejb.Singleton;
-import javax.inject.Inject;
+import javax.annotation.Resource;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
 
-@Singleton
+@Service
 public class DefaultOutputFacade implements OutputFacade {
 
 	private static final Logger logger = LogManager.getLogger(DefaultOutputFacade.class);
 	private static final Message[] NO_MESSAGES = new Message[0];
-	@Inject
+	@Resource
     private OutputService service;
-    @Inject
+    @Resource
     private RoomService roomService;
 
     /*

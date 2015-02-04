@@ -1,12 +1,11 @@
 package de.deyovi.chat.facades;
 
-import java.util.Locale;
-
-import org.json.JSONObject;
-
 import de.deyovi.chat.core.objects.ChatUser;
 import de.deyovi.chat.core.services.MessageConsumer;
 import de.deyovi.chat.core.services.OutputService.OutputMeta;
+import org.json.JSONObject;
+
+import java.util.Locale;
 
 public interface OutputFacade {
 

@@ -1,5 +1,20 @@
 package de.deyovi.chat.core.interpreters.impl;
 
+import de.deyovi.chat.core.interpreters.InputSegmentInterpreter;
+import de.deyovi.chat.core.objects.Segment;
+import de.deyovi.chat.core.objects.Segment.ContentType;
+import de.deyovi.chat.core.objects.impl.DefaultSegment;
+import de.deyovi.chat.core.objects.impl.ThumbnailedSegment;
+import de.deyovi.chat.core.services.impl.ImageThumbGeneratorService;
+import de.deyovi.chat.core.services.impl.WebsiteThumbGeneratorService;
+import org.apache.log4j.Logger;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,24 +27,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.ejb.Singleton;
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
-import javax.inject.Inject;
-
-import de.deyovi.chat.core.services.impl.WebsiteThumbGeneratorService;
-import org.apache.log4j.Logger;
-
-import de.deyovi.chat.core.interpreters.InputSegmentInterpreter;
-import de.deyovi.chat.core.objects.Segment;
-import de.deyovi.chat.core.objects.Segment.ContentType;
-import de.deyovi.chat.core.objects.impl.DefaultSegment;
-import de.deyovi.chat.core.objects.impl.ThumbnailedSegment;
-import de.deyovi.chat.core.services.impl.ImageThumbGeneratorService;
-import de.deyovi.chat.core.services.impl.DefaultWebsiteThumbGeneratorService;
-
-@Singleton
+@Component
+@Scope
 public class WebsiteProcessorPlugin implements InputSegmentInterpreter {
 
 	private final static Logger logger = Logger.getLogger(WebsiteProcessorPlugin.class);
@@ -38,9 +37,9 @@ public class WebsiteProcessorPlugin implements InputSegmentInterpreter {
 	private final Pattern titlePattern = Pattern.compile("<title>(.*)</title>", Pattern.CASE_INSENSITIVE);
 	private final Pattern imgPattern = Pattern.compile("<img[^>]*src=\"([^\"]+)\"[^>]*>|background(-image)?:url\\('?(.*?)'?\\).*?;", Pattern.CASE_INSENSITIVE);
 
-    @Inject
+    @Resource
     private WebsiteThumbGeneratorService websiteThumbGeneratorService;
-    @Inject
+    @Resource
     private ImageThumbGeneratorService imageThumbGeneratorService;
 
 

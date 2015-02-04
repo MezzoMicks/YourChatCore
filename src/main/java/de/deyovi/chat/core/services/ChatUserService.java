@@ -36,13 +36,6 @@ public interface ChatUserService {
 	public ChatUser getByName(String name);
 
     /**
-     * Retrieves a Chatuser by it's sessionId
-     * @param sessionId
-     * @return ChatUser
-     */
-	public ChatUser getBySessionId(String sessionId);
-
-    /**
      * Creates an Invitation key on bases of the ChatUser's rights
      * @param inviter
      * @param trial
@@ -53,13 +46,12 @@ public interface ChatUserService {
     /**
      * Logs a ChatUser in. Using the supplied password hash and using the sugar to counter-hash the saved password.
      * @param username
-     * @param pwHash
-     * @param sugar
+     * @param password
      * @return ChatUser (if login was successful, otherwise null)
      */
-	public Outcome<ChatUser> login(String username, String pwHash, String sugar);
+	public Outcome<ChatUser> login(String username, String password);
 
-	public Outcome<ChatUser> register(String username, String password, String invitationKey, String sugar);
+	public Outcome<ChatUser> register(String username, String password, String invitationKey);
 
     /**
      * Retrieves a List of all currently logged in ChatUsers

@@ -1,27 +1,24 @@
 package de.deyovi.chat.core.services.impl;
 
 import de.deyovi.chat.core.constants.ChatConstants.ImageSize;
-import de.deyovi.chat.core.dao.ChatUserDAO;
-import de.deyovi.chat.core.dao.ImageDAO;
-import de.deyovi.chat.core.dao.ProfileDAO;
-import de.deyovi.chat.core.entities.ChatUserEntity;
-import de.deyovi.chat.core.entities.ImageEntity;
-import de.deyovi.chat.core.entities.ProfileEntity;
+import de.deyovi.chat.dao.ChatUserDAO;
+import de.deyovi.chat.dao.ImageDAO;
+import de.deyovi.chat.dao.ProfileDAO;
+import de.deyovi.chat.dao.entities.ChatUserEntity;
+import de.deyovi.chat.dao.entities.ImageEntity;
+import de.deyovi.chat.dao.entities.ProfileEntity;
 import de.deyovi.chat.core.objects.ChatUser;
 import de.deyovi.chat.core.objects.Image;
 import de.deyovi.chat.core.objects.Profile;
 import de.deyovi.chat.core.objects.impl.DefaultImage;
 import de.deyovi.chat.core.objects.impl.DefaultProfile;
-import de.deyovi.chat.core.services.EntityService;
 import de.deyovi.chat.core.services.ProfileService;
 import de.deyovi.chat.core.utils.ChatUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Required;
 
-import javax.ejb.Stateless;
-import javax.enterprise.context.RequestScoped;
 import javax.imageio.ImageIO;
-import javax.inject.Inject;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -29,24 +26,21 @@ import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
 
-@RequestScoped
 public class DefaultProfileService implements ProfileService {
 	
 	private final static Logger logger = Logger.getLogger(DefaultProfileService.class);
 
-    @Inject
+    public void setChatUtils(ChatUtils chatUtils) {
+        this.chatUtils = chatUtils;
+    }
+
     private ChatUtils chatUtils;
-    @Inject
 	private ImageDAO imageDAO;
-    @Inject
 	private ProfileDAO profileDAO;
-    @Inject
 	private ChatUserDAO chatUserDAO;
-    @Inject
-	private EntityService entityService;
 
 	public byte[] getImageData(long id, ImageSize size) {
-		ImageEntity imageEntity = imageDAO.findByID(id);
+		ImageEntity imageEntity = imageDAO.findOne(id);
 		if (imageEntity != null) {
 			switch (size) {
 			default:
@@ -68,7 +62,7 @@ public class DefaultProfileService implements ProfileService {
 	@Override
 	public Long setAvatarImage(ChatUser user, String uploadName, InputStream uploadStream, String title) {
 		logger.info("setting avatar for userprofile " + user);
-		ChatUserEntity chatUserEntity = chatUserDAO.findChatUserById(user.getId());
+		ChatUserEntity chatUserEntity = chatUserDAO.findOne(user.getId());
 		if (chatUserEntity == null) {
 			logger.error("Couldn't find entity for user " + user);
 			return null;
@@ -78,9 +72,9 @@ public class DefaultProfileService implements ProfileService {
 			if (newImage != null) {
 				ImageEntity oldImage = profile.getAvatar();
 				profile.setAvatar(newImage);
-				entityService.persistOrMerge(profile, false);
+				profileDAO.save(profile);
 				if (oldImage != null) {
-					entityService.remove(oldImage);
+					imageDAO.delete(oldImage);
 				}
 				return newImage.getId();
 			} else {
@@ -93,9 +87,9 @@ public class DefaultProfileService implements ProfileService {
 	@Override
 	public boolean deleteImage(ChatUser user, long id) {
 		if (user != null) {
-			ImageEntity imageEntity = imageDAO.findByID(id);
+			ImageEntity imageEntity = imageDAO.findOne(id);
 			if (imageEntity != null) {
-				ProfileEntity profileEntity = profileDAO.findProfileById(user.getId());
+                ProfileEntity profileEntity = getProfileEntity(user);
 				if (profileEntity == null) {
 					logger.warn("User " + user + " has no profile, won't delete anything");
 					return false;
@@ -103,9 +97,9 @@ public class DefaultProfileService implements ProfileService {
 					if (profileEntity.getPhotos().contains(imageEntity)) {
 						profileEntity.getPhotos().remove(imageEntity);
 						logger.info("removing image " + id + " from profile");
-						entityService.persistOrMerge(profileEntity, false);
+						profileDAO.save(profileEntity);
 						logger.info("removing image " + id + " from db");
-						entityService.remove(imageEntity);
+						imageDAO.save(imageEntity);
 						return true;
 					} else {
 						logger.warn("Image " + id + " doesn't belong to " + user + " won't delete!");
@@ -130,15 +124,20 @@ public class DefaultProfileService implements ProfileService {
 	}
 	
 	/* (non-Javadoc)
-	 * @see de.deyovi.chat.core.services.impl.ProfileService#getProfile(de.deyovi.chat.core.entities.ChatUserEntity)
+	 * @see de.deyovi.chat.core.services.impl.ProfileService#getProfile(de.deyovi.chat.dao.entities.ChatUserEntity)
 	 */
 	@Override
 	public Profile getProfile(ChatUser user) {
-		ProfileEntity profileEntity = profileDAO.findProfileById(user.getId());
+        ProfileEntity profileEntity = getProfileEntity(user);
 		return convertFromEntity(user, profileEntity);
 	}
 
-	private Profile convertFromEntity(ChatUser user, ProfileEntity profileEntity) {
+    private ProfileEntity getProfileEntity(ChatUser user) {
+        ChatUserEntity chatUserEntity = chatUserDAO.findOne(user.getId());
+        return chatUserEntity != null ? chatUserEntity.getProfile() : null;
+    }
+
+    private Profile convertFromEntity(ChatUser user, ProfileEntity profileEntity) {
 		Profile profile;
 		if (profileEntity == null) {
 			profile = null;
@@ -167,9 +166,8 @@ public class DefaultProfileService implements ProfileService {
 		ProfileEntity profile = user.getProfile();
 		if (profile == null) {
 			profile = new ProfileEntity();
-            entityService.persistOrMerge(profile, true);
 			user.setProfile(profile);
-			entityService.persistOrMerge(user, false);
+			chatUserDAO.save(user);
 		}
 		return profile;
 	}
@@ -177,7 +175,7 @@ public class DefaultProfileService implements ProfileService {
 	@Override
 	public Long addGalleryImage(ChatUser user, String uploadName, InputStream uploadStream, String title) {
 		logger.info("adding image to userprofile " + user);
-		ChatUserEntity chatUserEntity = chatUserDAO.findChatUserById(user.getId());
+		ChatUserEntity chatUserEntity = chatUserDAO.findOne(user.getId());
 		if (chatUserEntity == null) {
 			logger.error("Couldn't find entity for user " + user);
 			return null;
@@ -186,7 +184,7 @@ public class DefaultProfileService implements ProfileService {
 			ImageEntity newImage = createImageEntity(uploadStream, uploadName, title, null);
 			if (newImage != null) {
 				profile.getPhotos().add(newImage);
-				entityService.persistOrMerge(profile, false);
+				profileDAO.save(profile);
 				return newImage.getId();
 			} else {
 				return null;
@@ -228,7 +226,7 @@ public class DefaultProfileService implements ProfileService {
 	        newEntity.setPinkynail(baos.toByteArray());
 	        baos.close();
 	        // write to db
-			entityService.persistOrMerge(newEntity, true);
+			imageDAO.save(newEntity);
 			return newEntity;
 		} catch (Exception e) {
 			logger.error(e);
@@ -236,5 +234,19 @@ public class DefaultProfileService implements ProfileService {
 		}
 	}
 
-	
+    @Required
+    public void setImageDAO(ImageDAO imageDAO) {
+        this.imageDAO = imageDAO;
+    }
+
+    @Required
+    public void setProfileDAO(ProfileDAO profileDAO) {
+        this.profileDAO = profileDAO;
+    }
+
+    @Required
+    public void setChatUserDAO(ChatUserDAO chatUserDAO) {
+        this.chatUserDAO = chatUserDAO;
+    }
+
 }
